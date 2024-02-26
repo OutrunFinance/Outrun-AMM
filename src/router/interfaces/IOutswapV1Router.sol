@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 interface IOutswapV1Router {
     function factory() external view returns (address);
-    function WETH() external view returns (address);
+    function RETH() external view returns (address);
 
     function addLiquidity(
         address tokenA,
