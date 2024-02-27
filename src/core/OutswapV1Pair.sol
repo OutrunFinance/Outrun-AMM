@@ -58,7 +58,8 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         token1 = _token1;
     }
 
-    function setFFPairFeeTo(address to, uint expireTime) external {
+    // called once by the factory at time of deployment
+    function setFFPairFeeInfo(address to, uint expireTime) external {
         require(msg.sender == factory, 'OutswapV1: FORBIDDEN');
         ffPairFeeTo = to;
         ffPairFeeExpireTime = expireTime;
@@ -66,6 +67,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
 
     // this low-level function should be called from a contract which performs important safety checks
     function mint(address to) external lock returns (uint liquidity) {
+        require(!_isFFPairFeeOpened(), 'OutswapV1: FFPAIR_FEE_NOT_EXPIRE');
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint balance0 = IERC20(token0).balanceOf(address(this));
         uint balance1 = IERC20(token1).balanceOf(address(this));
@@ -189,7 +191,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
                 uint rootKLast = Math.sqrt(_kLast);
                 if (rootK > rootKLast) {
                     uint numerator = totalSupply.mul(rootK.sub(rootKLast));
-                    if (ffPairFeeTo != address(0) && block.timestamp < ffPairFeeExpireTime) {
+                    if (_isFFPairFeeOpened()) {
                         uint denominator = rootKLast;
                         uint liquidity = numerator / denominator;
                         if (liquidity > 0) {
@@ -206,5 +208,9 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         } else if (_kLast != 0) {
             kLast = 0;
         }
+    }
+
+    function _isFFPairFeeOpened() internal view returns(bool) {
+        return ffPairFeeTo != address(0) && block.timestamp < ffPairFeeExpireTime;
     }
 }
