@@ -21,6 +21,9 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     address public token0;
     address public token1;
 
+    address public ffPairFeeTo;
+    uint public ffPairFeeExpireTime;
+
     uint112 private reserve0;           // uses single storage slot, accessible via getReserves
     uint112 private reserve1;           // uses single storage slot, accessible via getReserves
     uint32  private blockTimestampLast; // uses single storage slot, accessible via getReserves
@@ -30,6 +33,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     uint public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
 
     uint private unlocked = 1;
+
     modifier lock() {
         require(unlocked == 1, 'OutswapV1: LOCKED');
         unlocked = 0;
@@ -37,19 +41,14 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         unlocked = 1;
     }
 
+    constructor() {
+        factory = msg.sender;
+    }
+
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
         _reserve1 = reserve1;
         _blockTimestampLast = blockTimestampLast;
-    }
-
-    function _safeTransfer(address token, address to, uint value) private {
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'OutswapV1: TRANSFER_FAILED');
-    }
-
-    constructor() {
-        factory = msg.sender;
     }
 
     // called once by the factory at time of deployment
@@ -59,41 +58,10 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         token1 = _token1;
     }
 
-    // update reserves and, on the first call per block, price accumulators
-    function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
-        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, 'OutswapV1: OVERFLOW');
-        uint32 blockTimestamp = uint32(block.timestamp % 2**32);
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
-        if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
-            // * never overflows, and + overflow is desired
-            price0CumulativeLast += uint(UQ112x112.encode(_reserve1).uqdiv(_reserve0)) * timeElapsed;
-            price1CumulativeLast += uint(UQ112x112.encode(_reserve0).uqdiv(_reserve1)) * timeElapsed;
-        }
-        reserve0 = uint112(balance0);
-        reserve1 = uint112(balance1);
-        blockTimestampLast = blockTimestamp;
-        emit Sync(reserve0, reserve1);
-    }
-
-    // if fee is on, mint liquidity equivalent to 1/4th of the growth in sqrt(k)
-    function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
-        address feeTo = IOutswapV1Factory(factory).feeTo();
-        feeOn = feeTo != address(0);
-        uint _kLast = kLast; // gas savings
-        if (feeOn) {
-            if (_kLast != 0) {
-                uint rootK = Math.sqrt(uint(_reserve0).mul(_reserve1));
-                uint rootKLast = Math.sqrt(_kLast);
-                if (rootK > rootKLast) {
-                    uint numerator = totalSupply.mul(rootK.sub(rootKLast));
-                    uint denominator = rootK.mul(3).add(rootKLast);
-                    uint liquidity = numerator / denominator;
-                    if (liquidity > 0) _mint(feeTo, liquidity);
-                }
-            }
-        } else if (_kLast != 0) {
-            kLast = 0;
-        }
+    function setFFPairFeeTo(address to, uint expireTime) external {
+        require(msg.sender == factory, 'OutswapV1: FORBIDDEN');
+        ffPairFeeTo = to;
+        ffPairFeeExpireTime = expireTime;
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -187,5 +155,56 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     // force reserves to match balances
     function sync() external lock {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
+    }
+    
+    function _safeTransfer(address token, address to, uint value) private {
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'OutswapV1: TRANSFER_FAILED');
+    }
+
+    // update reserves and, on the first call per block, price accumulators
+    function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
+        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, 'OutswapV1: OVERFLOW');
+        uint32 blockTimestamp = uint32(block.timestamp % 2**32);
+        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+        if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
+            // * never overflows, and + overflow is desired
+            price0CumulativeLast += uint(UQ112x112.encode(_reserve1).uqdiv(_reserve0)) * timeElapsed;
+            price1CumulativeLast += uint(UQ112x112.encode(_reserve0).uqdiv(_reserve1)) * timeElapsed;
+        }
+        reserve0 = uint112(balance0);
+        reserve1 = uint112(balance1);
+        blockTimestampLast = blockTimestamp;
+        emit Sync(reserve0, reserve1);
+    }
+
+    // if fee is on, mint liquidity equivalent to 1/4th of the growth in sqrt(k)
+    function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
+        address feeTo = IOutswapV1Factory(factory).feeTo();
+        feeOn = feeTo != address(0);
+        uint _kLast = kLast; // gas savings
+        if (feeOn) {
+            if (_kLast != 0) {
+                uint rootK = Math.sqrt(uint(_reserve0).mul(_reserve1));
+                uint rootKLast = Math.sqrt(_kLast);
+                if (rootK > rootKLast) {
+                    uint numerator = totalSupply.mul(rootK.sub(rootKLast));
+                    if (ffPairFeeTo != address(0) && block.timestamp < ffPairFeeExpireTime) {
+                        uint denominator = rootKLast;
+                        uint liquidity = numerator / denominator;
+                        if (liquidity > 0) {
+                            _mint(feeTo, liquidity / 4);
+                            _mint(ffPairFeeTo, liquidity - (liquidity / 4));
+                        }
+                    } else {
+                        uint denominator = rootK.mul(3).add(rootKLast);
+                        uint liquidity = numerator / denominator;
+                        if (liquidity > 0) _mint(feeTo, liquidity);
+                    }
+                }
+            }
+        } else if (_kLast != 0) {
+            kLast = 0;
+        }
     }
 }

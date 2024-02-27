@@ -1,2 +1,3 @@
+source ../.env
 forge clean && forge build
-forge script NFTMarketV1.s.sol:NFTMarketV1Script --rpc-url sepolia --broadcast --verify --ffi
+forge script OutswapV1Script.s.sol:OutswapV1Script --rpc-url sepolia --broadcast --verify --ffi
