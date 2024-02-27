@@ -129,7 +129,7 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
             }
         }
 
-        if (to == address(0)) {
+        if (from != address(0) && to == address(0)) {
             unchecked {
                 // Overflow not possible: value <= totalSupply or value <= fromBalance <= totalSupply.
                 totalSupply -= value;
@@ -145,9 +145,6 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
     }
 
     function _mint(address account, uint256 value) internal {
-        if (account == address(0)) {
-            revert ERC20InvalidReceiver(address(0));
-        }
         _update(address(0), account, value);
     }
 

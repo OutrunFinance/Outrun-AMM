@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import './interfaces/IOutswapV1Factory.sol';
 import './OutswapV1Pair.sol';
+import "forge-std/console2.sol";
 
 contract OutswapV1Factory is IOutswapV1Factory {
     address public feeTo;
