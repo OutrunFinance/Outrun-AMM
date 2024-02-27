@@ -1,2 +1,20 @@
-out/
+# Compiler files
 cache/
+out/
+
+# Ignores development broadcast logs
+broadcast
+
+# Docs
+docs/
+
+# Dotenv file
+.env
+
+logs
+*.log
+
+.github
+lib
+.vscode
+node_modules
