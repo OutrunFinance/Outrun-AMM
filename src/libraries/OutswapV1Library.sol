@@ -21,7 +21,8 @@ library OutswapV1Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
+                /* bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(OutswapV1Pair).creationCode)); */
+                hex'0708044132050d87e5ab789364a2a8745bb71c7cc0226c3bbbf50d8053629261' // init code hash
             )))));
     }
 
