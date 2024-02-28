@@ -10,9 +10,11 @@ import "../src/router/OutswapV1Router.sol";
 contract OutswapV1Script is BaseScript {
     function run() public broadcaster {
         address RETH = 0x69D42F26c2709843433aE153979e089534Ed32b5;
+        address RUSD = 0x69D42F26c2709843433aE153979e089534Ed32b5;
+        address USDB = 0x69D42F26c2709843433aE153979e089534Ed32b5;
         OutswapV1ERC20 erc20 = new OutswapV1ERC20();
         OutswapV1Factory factory = new OutswapV1Factory(0x20ae1f29849E8392BD83c3bCBD6bD5301a6656F8);
-        OutswapV1Router router = new OutswapV1Router(address(factory), RETH);
+        OutswapV1Router router = new OutswapV1Router(address(factory), RETH, RUSD, USDB);
 
         console.log("OutswapV1ERC20 deployed on %s", address(erc20));
         console.log("OutswapV1Factory deployed on %s", address(factory));
