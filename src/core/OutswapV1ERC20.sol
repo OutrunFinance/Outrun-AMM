@@ -79,15 +79,10 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
         return true;
     }
 
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public virtual {
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        public
+        virtual
+    {
         if (block.timestamp > deadline) {
             revert ERC2612ExpiredSignature(deadline);
         }

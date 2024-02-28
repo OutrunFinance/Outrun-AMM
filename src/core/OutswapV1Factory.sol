@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.24;
 
-import './interfaces/IOutswapV1Factory.sol';
-import './OutswapV1Pair.sol';
+import "./interfaces/IOutswapV1Factory.sol";
+import "./OutswapV1Pair.sol";
 import "forge-std/console2.sol";
 
 contract OutswapV1Factory is IOutswapV1Factory {
@@ -17,15 +17,15 @@ contract OutswapV1Factory is IOutswapV1Factory {
         feeToSetter = _feeToSetter;
     }
 
-    function allPairsLength() external view returns (uint) {
+    function allPairsLength() external view returns (uint256) {
         return allPairs.length;
     }
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
-        require(tokenA != tokenB, 'OutswapV1: IDENTICAL_ADDRESSES');
+        require(tokenA != tokenB, "OutswapV1: IDENTICAL_ADDRESSES");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'OutswapV1: ZERO_ADDRESS');
-        require(getPair[token0][token1] == address(0), 'OutswapV1: PAIR_EXISTS'); // single check is sufficient
+        require(token0 != address(0), "OutswapV1: ZERO_ADDRESS");
+        require(getPair[token0][token1] == address(0), "OutswapV1: PAIR_EXISTS"); // single check is sufficient
         bytes memory bytecode = type(OutswapV1Pair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         assembly {
@@ -45,9 +45,14 @@ contract OutswapV1Factory is IOutswapV1Factory {
         emit PairCreated(token0, token1, pair, allPairs.length);
     }
 
-    function registerFFPair(address tokenA, address tokenB, address ffPairFeeto, uint ffPairFeeExpireTime) external {
-        require(msg.sender == feeToSetter, 'OutswapV1: FORBIDDEN');
-        require(tokenA != tokenB, 'OutswapV1: IDENTICAL_ADDRESSES');
+    function registerFFPair(
+        address tokenA, 
+        address tokenB, 
+        address ffPairFeeto, 
+        uint256 ffPairFeeExpireTime
+    ) external {
+        require(msg.sender == feeToSetter, "OutswapV1: FORBIDDEN");
+        require(tokenA != tokenB, "OutswapV1: IDENTICAL_ADDRESSES");
         FFPairFeeInfo memory info = FFPairFeeInfo(ffPairFeeto, ffPairFeeExpireTime);
         ffPairRegistry[tokenA][tokenB] = info;
         ffPairRegistry[tokenB][tokenA] = info;
@@ -56,12 +61,12 @@ contract OutswapV1Factory is IOutswapV1Factory {
     }
 
     function setFeeTo(address _feeTo) external {
-        require(msg.sender == feeToSetter, 'OutswapV1: FORBIDDEN');
+        require(msg.sender == feeToSetter, "OutswapV1: FORBIDDEN");
         feeTo = _feeTo;
     }
 
     function setFeeToSetter(address _feeToSetter) external {
-        require(msg.sender == feeToSetter, 'OutswapV1: FORBIDDEN');
+        require(msg.sender == feeToSetter, "OutswapV1: FORBIDDEN");
         feeToSetter = _feeToSetter;
     }
 }
