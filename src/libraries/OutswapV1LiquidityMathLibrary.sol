@@ -1,18 +1,15 @@
 //SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.5.0;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import '../core/interfaces/IOutswapV1Pair.sol';
 import '../core/interfaces/IOutswapV1ERC20.sol';
 import '../core/interfaces/IOutswapV1Factory.sol';
-import './SafeMath.sol';
 import './OutswapV1Library.sol';
 
 // library containing some math for dealing with the liquidity shares of a pair, e.g. computing their exact value
 // in terms of the underlying tokens
 library OutswapV1LiquidityMathLibrary {
-    using SafeMath for uint256;
-
     // computes the direction and magnitude of the profit-maximizing trade
     function computeProfitMaximizingTrade(
         uint256 truePriceTokenA,
@@ -22,21 +19,21 @@ library OutswapV1LiquidityMathLibrary {
     ) pure internal returns (bool aToB, uint256 amountIn) {
         aToB = Math.mulDiv(reserveA, truePriceTokenB, reserveB) < truePriceTokenA;
 
-        uint256 invariant = reserveA.mul(reserveB);
+        uint256 invariant = reserveA * reserveB;
 
         uint256 leftSide = Math.sqrt(
             Math.mulDiv(
-                invariant.mul(1000),
+                invariant * 1000,
                 aToB ? truePriceTokenA : truePriceTokenB,
-                (aToB ? truePriceTokenB : truePriceTokenA).mul(997)
+                (aToB ? truePriceTokenB : truePriceTokenA) * 997
             )
         );
-        uint256 rightSide = (aToB ? reserveA.mul(1000) : reserveB.mul(1000)) / 997;
+        uint256 rightSide = (aToB ? reserveA * 1000 : reserveB * 1000) / 997;
 
         if (leftSide < rightSide) return (false, 0);
 
         // compute the amount that must be sent to move the price to the profit-maximizing price
-        amountIn = leftSide.sub(rightSide);
+        amountIn = leftSide - rightSide;
     }
 
     // gets the reserves after an arbitrage moves the price to the profit-maximizing ratio given an externally observed true price
@@ -77,21 +74,22 @@ library OutswapV1LiquidityMathLibrary {
         uint256 reservesB,
         uint256 totalSupply,
         uint256 liquidityAmount,
+        uint256 ffPairFeeExpireTime,
         bool feeOn,
         uint kLast
-    ) internal pure returns (uint256 tokenAAmount, uint256 tokenBAmount) {
+    ) internal view returns (uint256 tokenAAmount, uint256 tokenBAmount) {
         if (feeOn && kLast > 0) {
-            uint rootK = Math.sqrt(reservesA.mul(reservesB));
+            uint rootK = Math.sqrt(reservesA * reservesB);
             uint rootKLast = Math.sqrt(kLast);
             if (rootK > rootKLast) {
                 uint numerator1 = totalSupply;
-                uint numerator2 = rootK.sub(rootKLast);
-                uint denominator = rootK.mul(5).add(rootKLast);
+                uint numerator2 = rootK - rootKLast;
+                uint denominator = block.timestamp < ffPairFeeExpireTime ? rootKLast :  rootK * 3 + rootKLast;
                 uint feeLiquidity = Math.mulDiv(numerator1, numerator2, denominator);
-                totalSupply = totalSupply.add(feeLiquidity);
+                totalSupply += feeLiquidity;
             }
         }
-        return (reservesA.mul(liquidityAmount) / totalSupply, reservesB.mul(liquidityAmount) / totalSupply);
+        return (reservesA * liquidityAmount / totalSupply, reservesB * liquidityAmount / totalSupply);
     }
 
     // get all current parameters from the pair and compute value of a liquidity amount
@@ -108,7 +106,7 @@ library OutswapV1LiquidityMathLibrary {
         bool feeOn = IOutswapV1Factory(factory).feeTo() != address(0);
         uint kLast = feeOn ? pair.kLast() : 0;
         uint totalSupply = IOutswapV1ERC20(address(pair)).totalSupply();
-        return computeLiquidityValue(reservesA, reservesB, totalSupply, liquidityAmount, feeOn, kLast);
+        return computeLiquidityValue(reservesA, reservesB, totalSupply, liquidityAmount, pair.ffPairFeeExpireTime(), feeOn, kLast);
     }
 
     // given two tokens, tokenA and tokenB, and their "true price", i.e. the observed ratio of value of token A to token B,
@@ -134,6 +132,6 @@ library OutswapV1LiquidityMathLibrary {
 
         (uint reservesA, uint reservesB) = getReservesAfterArbitrage(factory, tokenA, tokenB, truePriceTokenA, truePriceTokenB);
 
-        return computeLiquidityValue(reservesA, reservesB, totalSupply, liquidityAmount, feeOn, kLast);
+        return computeLiquidityValue(reservesA, reservesB, totalSupply, liquidityAmount, pair.ffPairFeeExpireTime(), feeOn, kLast);
     }
 }
