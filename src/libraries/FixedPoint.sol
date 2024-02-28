@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.4.0;
+pragma solidity ^0.8.24;
 
 import './BitMath.sol';
 import "@openzeppelin/contracts/utils/math/Math.sol";
