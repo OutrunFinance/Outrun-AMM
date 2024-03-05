@@ -1,7 +1,35 @@
 ## bug example
-1. swapRouter.swapExactTokensForETH用token交换eth，RETH.withdrw()的收款账户是router，router没有fallback
+1. swapRouter.swapExactTokensForETH用token交换eth, 需要将RETH换成ETH，调用`RETH.withdrw()`，RETH 通过`OutETHVault.withdraw()`调用金库合约转账给router，此时msg.sender转变为 ETHValut地址，而router.receive()要求 msg.sender == RETH，assertion failed。
    - 测试函数位置：test/SimpleSwap.t.sol:test_SwapUSDBtoETHtoRETH9 和 swapToken
    - 相关文件：test/utils/RETH.sol：59 以及test/BaseDeploy.t.sol:OutVault 26
+```
+    swap/src/router/OutswapV1Router.sol::function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
+        ...
+@>      IRETH(RETH).withdraw(amounts[amounts.length - 1]);                            // 1
+        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
+    }
+
+    src/token/ETH/RETH.sol：：function withdraw(uint256 amount) external override {
+        ...
+        IOutETHVault(outETHVault).withdraw(user, amount);                           // 2
+        ...
+    }
+
+    stake/src/vault/OutETHVault.sol::function withdraw(address user, uint256 amount) external override onlyRETHContract {
+        Address.sendValue(payable(user), amount);                                   // 3
+    }
+
+    swap/src/router/OutswapV1Router.sol::receive() external payable {
+        assert(msg.sender == RETH); // only accept ETH via fallback from the RETH contract  //  4
+    }
+```
+测试输出结果如下：
 ```
 
         [70856] OutswapV1Router::swapExactTokensForETH(1000, 0, [0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9, 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0], 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, 1)
