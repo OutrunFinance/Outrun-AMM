@@ -24,6 +24,12 @@ contract OutVault {
 	}
 
 	function withdraw(address sender, uint256 amount) external {
+	    payable(sender).transfer(amount);
+	}
+	receive() external payable {
+		
+	}
+	fallback() external payable {
 	    
 	}
     
@@ -59,9 +65,11 @@ contract BaseDeploy is Test {
 		ethVault = address(new OutVault());
 		usdVault = address(new OutVault());
 
-		RETH9 = address(new RETH(ethVault));
-		RUSD9 = address(new RUSD(usdVault));
+		RETH9 = address(new RETH(deployer));
+		RUSD9 = address(new RUSD(deployer));
 		USDB = address(new TestERC20(type(uint256).max / 2));
+
+		RETH(payable(RETH9)).setOutETHVault(ethVault);
 
 		vm.deal(deployer, 10e10 ether);
 		RETH(payable(RETH9)).deposit{value: 100 ether}();
