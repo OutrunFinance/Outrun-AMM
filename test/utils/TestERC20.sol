@@ -7,8 +7,4 @@ contract TestERC20 is ERC20Permit {
     constructor(uint256 amountToMint) ERC20('Test ERC20', 'TEST') ERC20Permit('Test ERC20') {
         _mint(msg.sender, amountToMint);
     }
-
-    function deposit() external payable{
-        
-    }
 }
