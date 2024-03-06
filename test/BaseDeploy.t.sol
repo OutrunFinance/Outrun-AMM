@@ -119,6 +119,26 @@ contract BaseDeploy is Test {
         block.timestamp + 1 days);
 	}
 
+	function addLiquidityETH(
+        address tokenA,
+		uint amount0
+	)
+		public
+		virtual
+		returns (uint , uint , uint )
+	{
+		// (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+		console2.log("addLiquidityETH");
+
+		return swapRouter.addLiquidityETH(
+        tokenA,
+        amount0,
+        0,
+        0,
+        deployer,
+        block.timestamp + 1 days);
+	}
+
 	function safeTransferFrom(
         address token,
         address from,

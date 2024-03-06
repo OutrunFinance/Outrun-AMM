@@ -26,22 +26,6 @@ contract SimpleFlash is BaseDeploy {
 
         vm.stopBroadcast();
     }
-    
-    function test_fuzz_mini_AddLiquidity(uint256 amount0) public { 
-        vm.assume(amount0 > 0 && amount0 < type(uint256).max/1000 && 1002 / Math.sqrt(amount0) > 0);
-
-        uint256 amount1 = (uint256(2000**2) / amount0);
-        uint liquidity = Math.sqrt(amount0*(amount1)) - (MINIMUM_LIQUIDITY);
-
-        vm.startPrank(deployer);
-        IERC20(USDB).approve(address(swapRouter), type(uint256).max);
-        if(liquidity < 0){
-            vm.expectRevert();
-            (uint amountA, uint amountB, ) = addLiquidity(USDB, tokens[0], amount0, amount1);
-        }
-        
-        vm.stopPrank();
-    }
 
     function test_SwapUSDBtoETHtoRETH9() public {
         vm.startBroadcast(deployer);
@@ -49,14 +33,16 @@ contract SimpleFlash is BaseDeploy {
         uint amountUSDB = 10000;
         IERC20(USDB).transfer(address(this), amountUSDB);
 
-        console2.log("-----------------start test USDB to ETH to token0 ------------------");
+        console2.log("----------------- start test USDB to ETH to token0 ---------------");
         uint256[] memory amounts = swapToken(deployer, USDB, tokens[0], amountUSDB/10 , 0, block.timestamp);
         console2.log("Swap USDB to RETH9:", amounts[0], "-", amounts[2]);
 
-
-        console2.log("-----------------start test USDB to ETH ------------------");
-        console2.log(address(RETH9).balance);
+        console2.log("----------------------- start test USDB to ETH ------------------");
         amounts = swapToken(deployer, USDB, RETH9, amountUSDB/10 , 0, block.timestamp);
+        console2.log("Swap USDB to ETH:", amounts[0], "-", amounts[1]);
+
+        console2.log("----------------------- start test ETH to token0 ------------------");
+        amounts = swapToken(deployer, RETH9, USDB, amountUSDB/10 , 0, block.timestamp);
         console2.log("Swap USDB to ETH:", amounts[0], "-", amounts[1]);
        
 
