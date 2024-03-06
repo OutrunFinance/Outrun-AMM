@@ -29,9 +29,7 @@ contract OutswapV1Router is IOutswapV1Router {
         IERC20(USDB).approve(_RUSD, type(uint256).max);
     }
 
-    receive() external payable {
-        assert(msg.sender == RETH); // only accept ETH via fallback from the RETH contract
-    }
+    receive() external payable {}
 
     /**
      * ADD LIQUIDITY *
@@ -173,7 +171,7 @@ contract OutswapV1Router is IOutswapV1Router {
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB) {
         address pair = OutswapV1Library.pairFor(factory, tokenA, tokenB);
-        IOutswapV1ERC20(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+        IOutswapV1Pair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint256 amount0, uint256 amount1) = IOutswapV1Pair(pair).burn(to);
         (address token0,) = OutswapV1Library.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
