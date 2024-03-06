@@ -174,6 +174,15 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         return true;
     }
 
+    function claimMakerFee() external override {
+        address msgSender = msg.sender;
+        uint256 makerFee = pendingFees[msgSender];
+        if (makerFee > 0) {
+            pendingFees[msgSender] = 0;
+            _mint(msgSender, makerFee);
+        }
+    }
+
     function _safeTransfer(address token, address to, uint256 value) private {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "OutswapV1: TRANSFER_FAILED");
