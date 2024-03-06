@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 interface IOutswapV1Pair {
-    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
+    event Mint(address indexed sender, address indexed to, uint256 amount0, uint256 amount1);
     event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
     event Swap(
         address indexed sender,
@@ -18,8 +18,6 @@ interface IOutswapV1Pair {
     function factory() external view returns (address);
     function token0() external view returns (address);
     function token1() external view returns (address);
-    function ffPairFeeTo() external view returns (address);
-    function ffPairFeeExpireTime() external view returns (uint256);
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
     function price0CumulativeLast() external view returns (uint256);
     function price1CumulativeLast() external view returns (uint256);
@@ -32,5 +30,7 @@ interface IOutswapV1Pair {
     function sync() external;
 
     function initialize(address token0, address token1) external;
-    function setFFPairFeeInfo(address to, uint256 expireTime) external;
+
+    function transfer(address to, uint256 value) external returns (bool);
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
 }

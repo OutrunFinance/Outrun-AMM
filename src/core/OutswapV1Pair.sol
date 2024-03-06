@@ -12,15 +12,12 @@ import "./OutswapV1ERC20.sol";
 contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     using UQ112x112 for uint224;
 
-    uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
+    uint256 public constant MINIMUM_LIQUIDITY = 1000;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
 
     address public factory;
     address public token0;
     address public token1;
-
-    address public ffPairFeeTo;
-    uint256 public ffPairFeeExpireTime;
 
     uint112 private reserve0; // uses single storage slot, accessible via getReserves
     uint112 private reserve1; // uses single storage slot, accessible via getReserves
@@ -29,6 +26,10 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
+    
+    uint256 public accumFeePerLP;
+    mapping(address account => uint256) public makerFeePerLP;
+    mapping(address account => uint256) public pendingFees;
 
     uint256 private unlocked = 1;
 
@@ -56,16 +57,8 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         token1 = _token1;
     }
 
-    // called once by the factory at time of deployment
-    function setFFPairFeeInfo(address to, uint256 expireTime) external {
-        require(msg.sender == factory, "OutswapV1: FORBIDDEN");
-        ffPairFeeTo = to;
-        ffPairFeeExpireTime = expireTime;
-    }
-
     // this low-level function should be called from a contract which performs important safety checks
     function mint(address to) external lock returns (uint256 liquidity) {
-        require(!_isFFPairFeeOpened(), "OutswapV1: FFPAIR_FEE_NOT_EXPIRE");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
         uint256 balance1 = IERC20(token1).balanceOf(address(this));
@@ -85,7 +78,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint256(reserve0) * uint256(reserve1); // reserve0 and reserve1 are up-to-date
-        emit Mint(msg.sender, amount0, amount1);
+        emit Mint(msg.sender, to, amount0, amount1);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -164,6 +157,23 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
+    function transfer(address to, uint256 value) public override returns (bool) {
+        address owner = _msgSender();
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
+        _mintFee(_reserve0, _reserve1);
+        _transfer(owner, to, value);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        address spender = _msgSender();
+        _spendAllowance(from, spender, value);
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
+        _mintFee(_reserve0, _reserve1);
+        _transfer(from, to, value);
+        return true;
+    }
+
     function _safeTransfer(address token, address to, uint256 value) private {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "OutswapV1: TRANSFER_FAILED");
@@ -186,36 +196,34 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     }
 
     // if fee is on, mint liquidity equivalent to 1/4th of the growth in sqrt(k)
-    function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
-        address feeTo = IOutswapV1Factory(factory).feeTo();
-        feeOn = feeTo != address(0);
-        uint256 _kLast = kLast; // gas savings
-        if (feeOn) {
-            if (_kLast != 0) {
-                uint256 rootK = Math.sqrt(uint256(_reserve0) * uint256(_reserve1));
-                uint256 rootKLast = Math.sqrt(_kLast);
-                if (rootK > rootKLast) {
-                    uint256 numerator = totalSupply * (rootK - rootKLast);
-                    if (_isFFPairFeeOpened()) {
-                        uint256 denominator = rootKLast;
-                        uint256 liquidity = numerator / denominator;
-                        if (liquidity > 0) {
-                            _mint(feeTo, liquidity / 4);
-                            _mint(ffPairFeeTo, liquidity - (liquidity / 4));
-                        }
+    function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool) {
+        address feeTo = _feeTo();
+        bool feeOn = feeTo != address(0);
+        if (kLast != 0) {
+            uint256 rootK = Math.sqrt(uint256(_reserve0) * uint256(_reserve1));
+            uint256 rootKLast = Math.sqrt(kLast);
+            if (rootK > rootKLast) {
+                if (totalSupply != 0) {
+                    accumFeePerLP += (rootK - rootKLast) / totalSupply;
+                }
+
+                address msgSender = msg.sender;
+                uint256 lpFee = balanceOf(msgSender) * (accumFeePerLP - makerFeePerLP[msgSender]);
+                if (lpFee > 0) {
+                    if (feeOn) {
+                        _mint(feeTo, lpFee / 4);
+                        pendingFees[msgSender] += lpFee * 3 / 4;
                     } else {
-                        uint256 denominator = rootK * 3 + rootKLast;
-                        uint256 liquidity = numerator / denominator;
-                        if (liquidity > 0) _mint(feeTo, liquidity);
+                        pendingFees[msgSender] += lpFee;
                     }
                 }
+                makerFeePerLP[msgSender] = accumFeePerLP;
             }
-        } else if (_kLast != 0) {
-            kLast = 0;
         }
+        return feeOn;
     }
 
-    function _isFFPairFeeOpened() internal view returns (bool) {
-        return ffPairFeeTo != address(0) && block.timestamp < ffPairFeeExpireTime;
+    function _feeTo() view internal returns (address) {
+        return IOutswapV1Factory(factory).feeTo();
     }
 }

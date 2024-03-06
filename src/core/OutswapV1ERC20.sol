@@ -56,12 +56,6 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
         return _domainSeparatorV4();
     }
 
-    function transfer(address to, uint256 value) public returns (bool) {
-        address owner = _msgSender();
-        _transfer(owner, to, value);
-        return true;
-    }
-
     function allowance(address owner, address spender) public view returns (uint256) {
         return _allowances[owner][spender];
     }
@@ -69,13 +63,6 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
     function approve(address spender, uint256 value) public returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, value);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {
-        address spender = _msgSender();
-        _spendAllowance(from, spender, value);
-        _transfer(from, to, value);
         return true;
     }
 
