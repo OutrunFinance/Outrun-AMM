@@ -3,19 +3,18 @@ pragma solidity ^0.8.24;
 pragma abicoder v2;
 
 import { Test, console2 } from "forge-std/Test.sol";
-import { Script, console2} from "forge-std/Script.sol";
 import { OutswapV1Router } from "src/router/OutswapV1Router.sol";
-import { OutswapV1Factory} from "src/core/OutswapV1Factory.sol";
 // import { OutswapV1Pair } from "src/core/OutswapV1Pair.sol";
 
 import {TestERC20} from "./utils/TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IRETH} from './interfaces/IRETH.sol';
+import { IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
 
-import "./utils/TestERC20.sol";
-import './utils/RETH.sol';
-import './utils/RUSD.sol';
-
-import "forge-std/StdUtils.sol";
+string constant RETHAtricle = "test/utils/RETH.json";
+string constant RUSDAtricle = "test/utils/RUSD.json";
+string constant factoryAtricle = "out/OutswapV1Factory.sol/OutswapV1Factory.json";
+string constant routerAtricle = "out/OutswapV1Router.sol/OutswapV1Router.json";
 
 contract OutVault {
 	address public owner;
@@ -26,12 +25,8 @@ contract OutVault {
 	function withdraw(address sender, uint256 amount) external {
 	    payable(sender).transfer(amount);
 	}
-	receive() external payable {
-		
-	}
-	fallback() external payable {
-	    
-	}
+	receive() external payable {}
+	fallback() external payable {}
     
 }
 
@@ -40,7 +35,7 @@ contract BaseDeploy is Test {
 	address public deployer = vm.envAddress("LOCAL_DEPLOYER");
 	address public user = makeAddr("user");
 
-	OutswapV1Factory internal poolFactory;
+	IOutswapV1Factory internal poolFactory;
 	OutswapV1Router internal swapRouter;
 
 	address internal RETH9;
@@ -65,22 +60,31 @@ contract BaseDeploy is Test {
 		ethVault = address(new OutVault());
 		usdVault = address(new OutVault());
 
-		RETH9 = address(new RETH(deployer));
-		RUSD9 = address(new RUSD(deployer));
+		RETH9 = deployCode(RETHAtricle, abi.encode(deployer));
+		RUSD9 = deployCode(RUSDAtricle, abi.encode(deployer));
 		USDB = address(new TestERC20(type(uint256).max / 2));
 
-		RETH(payable(RETH9)).setOutETHVault(ethVault);
+		IRETH(payable(RETH9)).setOutETHVault(ethVault);
 
 		vm.deal(deployer, 10e10 ether);
-		RETH(payable(RETH9)).deposit{value: 100 ether}();
+		IRETH(payable(RETH9)).deposit{value: 100 ether}();
 
-		poolFactory = new OutswapV1Factory(deployer);
-		// address _factory, address _RETH, address _RUSD, address _USDB)
+		// poolFactory = new OutswapV1Factory(deployer);
+		address factory = deployCode(factoryAtricle, abi.encode(deployer));
+		poolFactory = IOutswapV1Factory(factory);
+
 		swapRouter = new OutswapV1Router(address(poolFactory), RETH9, RUSD9, USDB);
 		
 		getToken();
 
 		vm.stopPrank();
+	}
+
+	function newRouter() public returns (address) {
+	    address factory = deployCode(factoryAtricle, abi.encode(deployer));
+		poolFactory = IOutswapV1Factory(factory);
+
+		return address(new OutswapV1Router(address(poolFactory), RETH9, RUSD9, USDB));
 	}
 
 	function getToken() internal {
