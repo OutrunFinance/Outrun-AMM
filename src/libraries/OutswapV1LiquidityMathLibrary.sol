@@ -75,17 +75,16 @@ library OutswapV1LiquidityMathLibrary {
         uint256 reservesB,
         uint256 totalSupply,
         uint256 liquidityAmount,
-        uint256 ffPairFeeExpireTime,
         bool feeOn,
         uint256 kLast
-    ) internal view returns (uint256 tokenAAmount, uint256 tokenBAmount) {
+    ) internal pure returns (uint256 tokenAAmount, uint256 tokenBAmount) {
         if (feeOn && kLast > 0) {
             uint256 rootK = Math.sqrt(reservesA * reservesB);
             uint256 rootKLast = Math.sqrt(kLast);
             if (rootK > rootKLast) {
                 uint256 numerator1 = totalSupply;
                 uint256 numerator2 = rootK - rootKLast;
-                uint256 denominator = block.timestamp < ffPairFeeExpireTime ? rootKLast : rootK * 3 + rootKLast;
+                uint256 denominator = rootK * 3 + rootKLast;
                 uint256 feeLiquidity = Math.mulDiv(numerator1, numerator2, denominator);
                 totalSupply += feeLiquidity;
             }
@@ -107,7 +106,7 @@ library OutswapV1LiquidityMathLibrary {
         uint256 kLast = feeOn ? pair.kLast() : 0;
         uint256 totalSupply = IOutswapV1ERC20(address(pair)).totalSupply();
         return computeLiquidityValue(
-            reservesA, reservesB, totalSupply, liquidityAmount, pair.ffPairFeeExpireTime(), feeOn, kLast
+            reservesA, reservesB, totalSupply, liquidityAmount, feeOn, kLast
         );
     }
 
@@ -133,7 +132,7 @@ library OutswapV1LiquidityMathLibrary {
             getReservesAfterArbitrage(factory, tokenA, tokenB, truePriceTokenA, truePriceTokenB);
 
         return computeLiquidityValue(
-            reservesA, reservesB, totalSupply, liquidityAmount, pair.ffPairFeeExpireTime(), feeOn, kLast
+            reservesA, reservesB, totalSupply, liquidityAmount, feeOn, kLast
         );
     }
 }
