@@ -34,7 +34,6 @@ contract OutVault {
 
 contract BaseDeploy is Test {
     address public deployer = vm.envAddress("LOCAL_DEPLOYER");
-    address public user = makeAddr("user");
 
     IOutswapV1Factory internal poolFactory;
     IOutswapV1Router internal swapRouter;
@@ -51,7 +50,6 @@ contract BaseDeploy is Test {
     address[] tokens;
 
     function setUp() public virtual {
-
         vm.startPrank(deployer);
 
         deployNewEnv();
@@ -94,18 +92,22 @@ contract BaseDeploy is Test {
         virtual
         returns (uint256, uint256, uint256)
     {
-        console2.log("addLiquidity");
+        return addLiquidity(address(swapRouter), tokenA, tokenB, amount0, amount1);
+    }
+
+    function addLiquidity(address router, address tokenA, address tokenB, uint256 amount0, uint256 amount1)
+        internal
+        virtual
+        returns (uint256, uint256, uint256)
+    {
         (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
 
-        return swapRouter.addLiquidity(tokenA, tokenB, amount0, amount1, 0, 0, deployer, block.timestamp + 1 days);
+        return IOutswapV1Router(router).addLiquidity(
+            tokenA, tokenB, amount0, amount1, 0, 0, deployer, block.timestamp + 1 days
+        );
     }
 
-    function addLiquidityETH(address tokenA, uint256 amount0) public virtual returns (uint256, uint256, uint256) {
-        // (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        console2.log("addLiquidityETH");
 
-        return swapRouter.addLiquidityETH(tokenA, amount0, 0, 0, deployer, block.timestamp + 1 days);
-    }
 
     function safeTransferFrom(address token, address from, address to, uint256 value) internal {
         (bool success, bytes memory data) =
