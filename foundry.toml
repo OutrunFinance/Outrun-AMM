@@ -7,9 +7,9 @@ solc = "0.8.24"
 via_ir = true
 build_info = true
 extra_output = ["storageLayout"]
+fs_permissions = [{ access = "read-write", path = "./"}]
 
-[rpc_endpoints]
-sepolia = "${BLAST_TESTNET_RPC}"
+rpc_endpoints = { blast_sepolia = "https://sepolia.blast.io"}
 
 [etherscan]
 sepolia = { key = "${ETHERSCAN_API_KEY}", chain = "168587773", url = "${BLAST_API_URL}" }

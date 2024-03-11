@@ -50,6 +50,9 @@ contract BaseDeploy is Test {
     address[] tokens;
 
     function setUp() public virtual {
+        uint256 forkId = vm.createFork("blast_sepolia");
+        vm.selectFork(forkId);
+
         vm.startPrank(deployer);
 
         deployNewEnv();
