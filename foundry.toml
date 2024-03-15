@@ -7,11 +7,12 @@ solc = "0.8.24"
 via_ir = true
 build_info = true
 extra_output = ["storageLayout"]
-fs_permissions = [{ access = "read-write", path = "./"}]
+gas_reports = ["*"]
 
-rpc_endpoints = { blast_sepolia = "https://sepolia.blast.io"}
+[rpc_endpoints]
+blast_sepolia = "${BLAST_TESTNET_RPC}"
 
 [etherscan]
-sepolia = { key = "${ETHERSCAN_API_KEY}", chain = "168587773", url = "${BLAST_API_URL}" }
+blast_sepolia = { key = "${ETHERSCAN_API_KEY}", chain = "168587773", url = "${BLAST_API_URL}" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
