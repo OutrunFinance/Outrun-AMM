@@ -21,12 +21,12 @@ contract OutswapV1Router is IOutswapV1Router {
         _;
     }
 
-    constructor(address _factory, address _RETH, address _RUSD, address _USDB) {
+    constructor(address _factory, address _reth, address _rusd, address _usdb) {
         factory = _factory;
-        RETH = _RETH;
-        RUSD = _RUSD;
-        USDB = _USDB;
-        IERC20(USDB).approve(_RUSD, type(uint256).max);
+        RETH = _reth;
+        RUSD = _rusd;
+        USDB = _usdb;
+        IERC20(_usdb).approve(_rusd, type(uint256).max);
     }
 
     receive() external payable {}
