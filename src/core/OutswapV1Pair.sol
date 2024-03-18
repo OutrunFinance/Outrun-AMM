@@ -57,6 +57,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         token1 = _token1;
     }
 
+    // PendingFeeAmount of msgSender
     function pendingFeeAmount() external view returns (uint256 _amount0, uint256 _amount1, address _token0, address _token1) {
         uint256 liquidity = pendingFees[msg.sender];
         uint256 _totalSupply = totalSupply;
