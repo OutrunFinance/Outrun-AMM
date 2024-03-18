@@ -57,6 +57,15 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         token1 = _token1;
     }
 
+    function pendingFeeAmount() external view returns (uint256 _amount0, uint256 _amount1, address _token0, address _token1) {
+        uint256 liquidity = pendingFees[msg.sender];
+        uint256 _totalSupply = totalSupply;
+        _amount0 = liquidity * reserve0 / _totalSupply; 
+        _amount1 = liquidity * reserve1 / _totalSupply;
+        _token0 = token0;
+        _token1 = token1;
+    }
+
     // this low-level function should be called from a contract which performs important safety checks
     function mint(address to) external lock returns (uint256 liquidity) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
