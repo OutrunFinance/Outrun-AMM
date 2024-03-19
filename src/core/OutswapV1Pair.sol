@@ -51,22 +51,20 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     }
 
     // view current maker fee of account
-    function viewMakerFee(address account) external view override returns (uint256 _amount0, uint256 _amount1, address _token0, address _token1) {
+    function viewMakerFee(address account) external view override returns (uint256 makerFeeLP, uint256 _amount0, uint256 _amount1) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); 
         uint256 _accumFeePerLP = accumFeePerLP + (Math.sqrt(uint256(_reserve0) * uint256(_reserve1)) - Math.sqrt(kLast)) / totalSupply;
         
         uint256 makerFeeLast = pendingFees[account];
         uint256 lpFee = balanceOf(account) * (_accumFeePerLP - makerFeeLast);
-        uint256 makerFee;
+        uint256 makerFeeLP;
         if (lpFee > 0) {
-            makerFee = _feeTo() != address(0) ? makerFeeLast + lpFee * 3 / 4 : makerFeeLast + lpFee;
+            makerFeeLP = _feeTo() != address(0) ? makerFeeLast + lpFee * 3 / 4 : makerFeeLast + lpFee;
         }
 
         uint256 _totalSupply = totalSupply;
-        _amount0 = makerFee * _reserve0 / _totalSupply; 
-        _amount1 = makerFee * _reserve1 / _totalSupply;
-        _token0 = token0;
-        _token1 = token1;
+        _amount0 = makerFeeLP * _reserve0 / _totalSupply; 
+        _amount1 = makerFeeLP * _reserve1 / _totalSupply;
     }
 
     // called once by the factory at time of deployment

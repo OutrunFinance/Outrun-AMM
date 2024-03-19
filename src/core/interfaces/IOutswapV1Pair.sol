@@ -22,7 +22,7 @@ interface IOutswapV1Pair {
     function price1CumulativeLast() external view returns (uint256);
     function kLast() external view returns (uint256);
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-    function viewMakerFee(address account) external view returns (uint256 _amount0, uint256 _amount1, address _token0, address _token1);
+    function viewMakerFee(address account) external view returns (uint256 makerFeeLP, uint256 _amount0, uint256 _amount1);
 
     function mint(address to) external returns (uint256 liquidity);
     function burn(address to) external returns (uint256 amount0, uint256 amount1);
