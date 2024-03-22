@@ -169,13 +169,13 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
     }
 
     // claim maker fee
-    function claimMakerFee() external override {
+    function claimMakerFee() external override returns (uint256 makerFee) {
         address msgSender = msg.sender;
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         _mintFee(_reserve0, _reserve1);
         kLast = uint256(_reserve0) * uint256(_reserve1);
 
-        uint256 makerFee = pendingFees[msgSender];
+        makerFee = pendingFees[msgSender];
         if (makerFee > 0) {
             pendingFees[msgSender] = 0;
             _mint(msgSender, makerFee);
