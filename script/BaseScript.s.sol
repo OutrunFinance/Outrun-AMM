@@ -6,17 +6,11 @@ import "forge-std/Script.sol";
 abstract contract BaseScript is Script {
     uint256 internal privateKey;
     address internal deployer;
-    address internal owner;
-    address internal gasManager;
-    address internal feeTo;
     string internal mnemonic;
 
     function setUp() public virtual {
         //mnemonic = vm.envString("MNEMONIC");
         privateKey = vm.envUint("PRIVATE_KEY");
-        owner = vm.envAddress("OWNER");
-        gasManager = vm.envAddress("GAS_MANAGER");
-        feeTo = vm.envAddress("FEE_TO");
         deployer = vm.rememberKey(privateKey);
     }
 

@@ -9,9 +9,13 @@ import "../src/router/OutswapV1Router.sol";
 
 contract OutswapV1Script is BaseScript {
     function run() public broadcaster {
-        address RETH = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
-        address RUSD = 0x671540e1569b8E82605C3eEA5939d326C4Eda457;
-        address USDB = 0x4200000000000000000000000000000000000022;
+        address RETH = vm.envAddress("RETH");
+        address RUSD = vm.envAddress("RUSD");
+        address USDB = vm.envAddress("USDB");
+        address owner = vm.envAddress("OWNER");
+        address feeTo = vm.envAddress("FEE_TO");
+        address gasManager = vm.envAddress("GAS_MANAGER");
+        
         OutswapV1Factory factory = new OutswapV1Factory(owner, gasManager);
         factory.setFeeTo(feeTo);
         OutswapV1Router router = new OutswapV1Router(address(factory), RETH, RUSD, USDB, gasManager);
