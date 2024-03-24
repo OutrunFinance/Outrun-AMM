@@ -9,11 +9,12 @@ import "../src/router/OutswapV1Router.sol";
 
 contract OutswapV1Script is BaseScript {
     function run() public broadcaster {
-        address RETH = 0x8921b78E6b521dF5F55eF41e1787100BD43c1366;
-        address RUSD = 0xB0A16CF65F85e8A52C4462ADE453d0E6D4A5e9bC;
+        address RETH = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
+        address RUSD = 0x671540e1569b8E82605C3eEA5939d326C4Eda457;
         address USDB = 0x4200000000000000000000000000000000000022;
-        OutswapV1Factory factory = new OutswapV1Factory(0xcae21365145C467F8957607aE364fb29Ee073209);
-        OutswapV1Router router = new OutswapV1Router(address(factory), RETH, RUSD, USDB);
+        OutswapV1Factory factory = new OutswapV1Factory(owner, gasManager);
+        factory.setFeeTo(feeTo);
+        OutswapV1Router router = new OutswapV1Router(address(factory), RETH, RUSD, USDB, gasManager);
 
         console.log("OutswapV1Factory deployed on %s", address(factory));
         console.log("OutswapV1Router deployed on %s", address(router));
