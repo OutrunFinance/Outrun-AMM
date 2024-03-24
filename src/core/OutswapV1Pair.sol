@@ -3,13 +3,16 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+
+import "./OutswapV1ERC20.sol";
 import "./interfaces/IOutswapV1Pair.sol";
 import "./interfaces/IOutswapV1Factory.sol";
 import "./interfaces/IOutswapV1Callee.sol";
 import "../libraries/UQ112x112.sol";
-import "./OutswapV1ERC20.sol";
+import "../blast/GasManagerable.sol";
 
-contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
+
+contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     using UQ112x112 for uint224;
 
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
@@ -40,7 +43,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         unlocked = 1;
     }
 
-    constructor() {
+    constructor(address _gasManager) GasManagerable(_gasManager) {
         factory = msg.sender;
     }
 
@@ -57,7 +60,6 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         
         uint256 makerFeeLast = pendingFees[account];
         uint256 lpFee = balanceOf(account) * (_accumFeePerLP - makerFeeLast);
-        uint256 makerFeeLP;
         if (lpFee > 0) {
             makerFeeLP = _feeTo() != address(0) ? makerFeeLast + lpFee * 3 / 4 : makerFeeLast + lpFee;
         }
@@ -263,7 +265,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20 {
         }
     }
 
-    function _accumulate(uint256 rootK, uint256 rootKLast) internal returns (uint256) {
+    function _accumulate(uint256 rootK, uint256 rootKLast) internal view returns (uint256) {
         return accumFeePerLP + ((rootK - rootKLast) / totalSupply);
     }
 

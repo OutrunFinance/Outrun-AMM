@@ -2,15 +2,17 @@
 pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../libraries/TransferHelper.sol";
-import "../core/interfaces/IOutswapV1Factory.sol";
+
 import "./interfaces/IOutswapV1Router.sol";
-import "../core/interfaces/IOutswapV1ERC20.sol";
 import "./interfaces/IRETH.sol";
 import "./interfaces/IRUSD.sol";
+import "../libraries/TransferHelper.sol";
 import "../libraries/OutswapV1Library.sol";
+import "../core/interfaces/IOutswapV1ERC20.sol";
+import "../core/interfaces/IOutswapV1Factory.sol";
+import "../blast/GasManagerable.sol";
 
-contract OutswapV1Router is IOutswapV1Router {
+contract OutswapV1Router is IOutswapV1Router, GasManagerable {
     address public immutable override factory;
     address public immutable RETH;
     address public immutable RUSD;
@@ -21,7 +23,7 @@ contract OutswapV1Router is IOutswapV1Router {
         _;
     }
 
-    constructor(address _factory, address _reth, address _rusd, address _usdb) {
+    constructor(address _factory, address _reth, address _rusd, address _usdb, address _gasManager) GasManagerable(_gasManager) {
         factory = _factory;
         RETH = _reth;
         RUSD = _rusd;
