@@ -8,7 +8,9 @@ import {Test, console2} from "forge-std/Test.sol";
 
 import {TestERC20} from "./utils/TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IRUSD} from "./interfaces/IRUSD.sol";
 import {IRETH} from "./interfaces/IRETH.sol";
+import {IUSDB} from "./interfaces/IUSDB.sol";
 import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
 import {IOutswapV1Router} from "src/router/interfaces/IOutswapV1Router.sol";
 
@@ -49,12 +51,17 @@ contract BaseDeploy is Test {
         vm.label(ethVault, "ethVault");
         vm.label(usdVault, "usdVault");
 
-        address[2] memory nativeToken = [RETH9, RUSD9];
-        for (uint256 i = 0; i < nativeToken.length; i++) {
-            deal(nativeToken[i], deployer, 100e18);
-        }
+        vm.deal(deployer, 100 ether);
+
+        vm.prank(IUSDB(USDB).bridge());
+        IUSDB(USDB).mint(deployer, 100 ether);
 
         vm.startPrank(deployer);
+        IRETH(RETH9).deposit{value: 20 ether}();
+
+        vm.mockCall(USDB, abi.encodeWithSelector(IERC20.transferFrom.selector, deployer, usdVault, 10 ether), abi.encode(1));
+        IRUSD(RUSD9).deposit(10 ether);
+
         getToken(tokenNum);
         vm.stopPrank();
     }
@@ -69,8 +76,6 @@ contract BaseDeploy is Test {
     }
 
     function deployNewEnv() internal {
-        ethVault = address(new OutVault());
-        usdVault = address(new OutVault());
         RETH9 = deployCode(RETHAtricle, abi.encode(deployer));
         RUSD9 = deployCode(RUSDAtricle, abi.encode(deployer));
         USDB = address(new TestERC20(type(uint256).max / 2));
@@ -125,19 +130,4 @@ contract BaseDeploy is Test {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(IERC20.approve.selector, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "SA");
     }
-}
-
-contract OutVault {
-    address public owner;
-
-    constructor() {
-        owner = msg.sender;
-    }
-
-    function withdraw(address sender, uint256 amount) external {
-        payable(sender).transfer(amount);
-    }
-
-    receive() external payable {}
-    fallback() external payable {}
 }
