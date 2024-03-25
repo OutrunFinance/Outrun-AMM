@@ -7,7 +7,7 @@ import {BaseDeploy} from "./BaseDeploy.t.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract SimpleFlash is BaseDeploy {
+contract SimpleSwap is BaseDeploy {
     uint256 MINIMUM_LIQUIDITY = 10 ** 3;
 
     address internal defaultSender = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;

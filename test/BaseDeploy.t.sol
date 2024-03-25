@@ -17,55 +17,60 @@ string constant RUSDAtricle = "test/utils/RUSD.json";
 string constant factoryAtricle = "out/OutswapV1Factory.sol/OutswapV1Factory.json";
 string constant routerAtricle = "out/OutswapV1Router.sol/OutswapV1Router.json";
 
-contract OutVault {
-    address public owner;
-
-    constructor() {
-        owner = msg.sender;
-    }
-
-    function withdraw(address sender, uint256 amount) external {
-        payable(sender).transfer(amount);
-    }
-
-    receive() external payable {}
-    fallback() external payable {}
-}
-
 contract BaseDeploy is Test {
     address public deployer = vm.envAddress("LOCAL_DEPLOYER");
 
-    IOutswapV1Factory internal poolFactory;
-    IOutswapV1Router internal swapRouter;
+    address OutswapV1Factory = 0x3cEca1C6e131255e7C95788D40581934E84A1F9d;
+    address OutswapV1Router = 0xd48CA5f376A9abbee74997c226a55D71b4168790;
 
-    address internal RETH9;
-    address internal RUSD9;
-    address internal USDB;
+    IOutswapV1Factory internal poolFactory = IOutswapV1Factory(OutswapV1Factory);
+    IOutswapV1Router internal swapRouter = IOutswapV1Router(OutswapV1Router);
 
-    address internal ethVault;
-    address internal usdVault;
+    address internal RETH9 = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
+    address internal RUSD9 = 0x671540e1569b8E82605C3eEA5939d326C4Eda457;
+    address internal USDB = 0x4200000000000000000000000000000000000022;
 
-    uint256 immutable tokenNumber = 3;
+    address internal ethVault = 0x6a120b799AEF815fDf2a571B4BD7Fcfe93160135;
+    address internal usdVault = 0xC92d49c71b6E7B9724E4891e8594907F40aD9AFA;
 
-    address[] tokens;
+    uint256 internal tokenNum = 3;
+
+    address[] public tokens;
 
     function setUp() public virtual {
         uint256 forkId = vm.createFork("blast_sepolia");
         vm.selectFork(forkId);
 
+        vm.label(OutswapV1Factory, "OutswapV1Factory");
+        vm.label(OutswapV1Router, "OutswapV1Router");
+        vm.label(RETH9, "RETH9");
+        vm.label(RUSD9, "RUSD9");
+        vm.label(USDB, "USDB");
+        vm.label(ethVault, "ethVault");
+        vm.label(usdVault, "usdVault");
+
+        address[2] memory nativeToken = [RETH9, RUSD9];
+        for (uint256 i = 0; i < nativeToken.length; i++) {
+            deal(nativeToken[i], deployer, 100e18);
+        }
+
         vm.startPrank(deployer);
-
-        deployNewEnv();
-
-        getToken();
-
+        getToken(tokenNum);
         vm.stopPrank();
+    }
+
+    function test_getINIT_CODEJson() internal {
+        getINIT_CODEJson();
+    }
+
+    function getINIT_CODEJson() internal view {
+        bytes memory bytecode = abi.encodePacked(vm.getCode("OutswapV1Pair.sol:OutswapV1Pair"));
+        console2.logBytes32(keccak256(bytecode));
     }
 
     function deployNewEnv() internal {
         ethVault = address(new OutVault());
         usdVault = address(new OutVault());
-
         RETH9 = deployCode(RETHAtricle, abi.encode(deployer));
         RUSD9 = deployCode(RUSDAtricle, abi.encode(deployer));
         USDB = address(new TestERC20(type(uint256).max / 2));
@@ -82,7 +87,7 @@ contract BaseDeploy is Test {
         swapRouter = IOutswapV1Router(router);
     }
 
-    function getToken() internal {
+    function getToken(uint256 tokenNumber) internal {
         for (uint256 i = 0; i < tokenNumber; i++) {
             address token = address(new TestERC20(type(uint256).max / 2));
             tokens.push(token);
@@ -103,14 +108,12 @@ contract BaseDeploy is Test {
         virtual
         returns (uint256, uint256, uint256)
     {
-        (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        (tokenA, tokenB, amount0, amount1) = tokenA < tokenB ? (tokenA, tokenB, amount0, amount1) : (tokenB, tokenA, amount1, amount0);
 
         return IOutswapV1Router(router).addLiquidity(
             tokenA, tokenB, amount0, amount1, 0, 0, deployer, block.timestamp + 1 days
         );
     }
-
-
 
     function safeTransferFrom(address token, address from, address to, uint256 value) internal {
         (bool success, bytes memory data) =
@@ -122,4 +125,19 @@ contract BaseDeploy is Test {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(IERC20.approve.selector, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), "SA");
     }
+}
+
+contract OutVault {
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function withdraw(address sender, uint256 amount) external {
+        payable(sender).transfer(amount);
+    }
+
+    receive() external payable {}
+    fallback() external payable {}
 }

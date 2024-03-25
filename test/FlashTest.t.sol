@@ -5,7 +5,7 @@ pragma abicoder v2;
 import {BaseDeploy, factoryAtricle, routerAtricle} from "./BaseDeploy.t.sol";
 import {console2} from "forge-std/console2.sol";
 
-import 'src/libraries/OutswapV1Library.sol';
+import "src/libraries/OutswapV1Library.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
@@ -24,8 +24,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  */
 
 contract SimpleFlash is IOutswapV1Callee {
-    event Repay(address tokenBorrow, uint RepayAmount);
-    
+    event Repay(address tokenBorrow, uint256 RepayAmount);
+
     address private immutable owner;
 
     constructor() {
@@ -33,21 +33,25 @@ contract SimpleFlash is IOutswapV1Callee {
     }
 
     // 借t1
-    function flashSwap(address tokenBorrow, address tokenRevenue, address router1, address router2, uint256 borrowAmount)
-        external
-    {
+    function flashSwap(
+        address tokenBorrow,
+        address tokenRevenue,
+        address router1,
+        address router2,
+        uint256 borrowAmount
+    ) external {
         require(tokenBorrow != address(0) && tokenRevenue != address(0), "Flash: ZERO_ADDRESS");
         require(router1 != address(0) && router2 != address(0), "Flash: ZERO_ADDRESS");
 
         address[] memory path = new address[](2);
-        uint256 amount0Out; uint256 amount1Out;
+        uint256 amount0Out;
+        uint256 amount1Out;
 
-        if(tokenBorrow < tokenRevenue) {
+        if (tokenBorrow < tokenRevenue) {
             (path[0], path[1]) = (tokenBorrow, tokenRevenue);
             (amount0Out, amount1Out) = (borrowAmount, uint256(0));
             console2.log("path[0]: tokenBorrow, amount1Out: %s", amount0Out);
-        }
-        else {
+        } else {
             (path[0], path[1]) = (tokenRevenue, tokenBorrow);
             (amount0Out, amount1Out) = (uint256(0), borrowAmount);
             console2.log("path[1]: tokenBorrow, amount1Out: %s", amount1Out);
@@ -55,7 +59,10 @@ contract SimpleFlash is IOutswapV1Callee {
 
         address pair = IOutswapV1Factory(IOutswapV1Router(router1).factory()).getPair(path[0], path[1]);
         IOutswapV1Pair(pair).swap(
-            amount0Out, amount1Out, address(this), abi.encode(msg.sender, path, tokenBorrow, tokenRevenue, router1, router2, borrowAmount)
+            amount0Out,
+            amount1Out,
+            address(this),
+            abi.encode(msg.sender, path, tokenBorrow, tokenRevenue, router1, router2, borrowAmount)
         );
     }
 
@@ -76,17 +83,22 @@ contract SimpleFlash is IOutswapV1Callee {
 
         require(sender == address(this), "KittyTradeX FlashLoan: not sender");
         require(amount0 == borrowAmount || amount1 == borrowAmount, "KittyTradeX FlashLoan: amount != borrowAmount");
-        require(IERC20(tokenBorrow).balanceOf(address(this)) >= borrowAmount, "KittyTradeX FlashLoan: not enough balance");
+        require(
+            IERC20(tokenBorrow).balanceOf(address(this)) >= borrowAmount, "KittyTradeX FlashLoan: not enough balance"
+        );
 
         /* perform 逻辑：将借出来的t1还给pool1 */
         address[] memory swapPath = new address[](2);
-        (swapPath[1], swapPath[0]) = (tokenRevenue, tokenBorrow);
+        uint256[] memory tokenAmount = new uint256[](2);
+        (swapPath[0], swapPath[1]) = (tokenBorrow, tokenRevenue);
 
         IERC20(swapPath[1]).approve(router2, type(uint256).max);
 
+        // swap the amount of tokenRevenue for 100 tokenBorrow 
         uint256[] memory amounts = new uint256[](2);
         amounts = OutswapV1Library.getAmountsOut(IOutswapV1Router(router2).factory(), borrowAmount, swapPath);
         console2.log("amounts[0]", amounts[0], "amounts[1]", amounts[1]);
+
 
         IERC20(tokenBorrow).approve(router2, type(uint256).max);
         IOutswapV1Router(router2).swapExactTokensForTokens(borrowAmount, 0, swapPath, address(this), block.timestamp);
@@ -107,31 +119,35 @@ contract FlashMock is BaseDeploy {
 
     uint256 MINIMUM_LIQUIDITY = 10 ** 3;
     address internal router2;
-    address internal defaultSender = 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38;
+    address internal gasManager = vm.envAddress("GAS_MANAGER");
 
     function setUp() public override {
         super.setUp();
 
-        console2.log("--------------------  Pre-work, Creating two factory contracts and two pools --------------------");
+        console2.log(
+            "--------------------  Pre-work, Creating two factory contracts and two pools --------------------"
+        );
 
         vm.label(tokens[0], "token0");
         vm.label(tokens[1], "token1");
+        vm.label(router2, "router2");
 
         vm.startBroadcast(deployer);
 
-        uint amount = 10000;
+        uint256 amount = 10000;
 
         console2.log("Factory contracts created successfully.");
-        address factory2 = deployCode(factoryAtricle, abi.encode(deployer));
-        router2 = deployCode(routerAtricle, abi.encode(factory2, RETH9, RUSD9, USDB));
+        address factory2 = deployCode(factoryAtricle, abi.encode(deployer, gasManager));
+        router2 = deployCode(routerAtricle, abi.encode(factory2, RETH9, RUSD9, USDB, gasManager));
 
         (uint256 amountA1, uint256 amountB1, uint256 liquidity1) = addLiquidity(tokens[0], tokens[1], amount, amount); // token0 = token1
-        console2.log("Creating liquidity pool1", amount, ":", amount);
+        console2.log("Creating liquidity pool1", amountA1, ":", amountB1);
 
-        safeApprove(tokens[0], router2, type(uint256).max);
-        safeApprove(tokens[1], router2, type(uint256).max);
-        (uint256 amountA2, uint256 amountB2, uint256 liquidity2) = addLiquidity(router2, tokens[0], tokens[1], amount, amount*100); // token0 = 100token
-        console2.log("Creating liquidity pool1 token0 - token1", amount, ":", amount*100);
+        safeApprove(tokens[0], router2, amount);
+        safeApprove(tokens[1], router2, amount * 100);
+        (uint256 amountA2, uint256 amountB2, uint256 liquidity2) =
+            addLiquidity(router2, tokens[0], tokens[1], amount, amount * 100); // token0 = 100token
+        console2.log("Creating liquidity pool2 token0 - token1", amountA2, ":", amountB2);
 
         flash = new SimpleFlash();
 
@@ -142,28 +158,24 @@ contract FlashMock is BaseDeploy {
         uint256 amountBefore = IERC20(tokens[1]).balanceOf(address(flash));
         console2.log("-------------------------------- Start flashswap ----------------------------------");
         console2.log("[Start] tokenBorrow: ", tokens[0], " tokenRevenue:", tokens[1]);
-        console2.log("[info] flash contract's token1 balance before flanswap:", amountBefore);
+        console2.log("[info] flash contract's token1 balance before flashswap:", amountBefore);
 
         vm.startBroadcast(deployer);
 
-        
         flash.flashSwap(tokens[0], tokens[1], address(swapRouter), router2, 100);
 
         vm.stopBroadcast();
 
         console2.log("-------------------------------- End Flashswap ----------------------------------");
-    
+
         uint256 amountAfter = IERC20(tokens[1]).balanceOf(address(flash));
         console2.log("[info] flash contract's token1 balance after flanswap:", amountAfter);
 
-        if(amountAfter > amountBefore) {
+        if (amountAfter > amountBefore) {
             console2.log("[end] flash contract recieved profit of token1", amountAfter - amountBefore);
-        }
-        else {
+        } else {
             console2.log("[end] flash contract loss of token1", amountBefore - amountAfter);
             emit flashFailed(tokens[1], amountBefore, amountAfter, amountBefore - amountAfter);
         }
     }
-
-        
 }

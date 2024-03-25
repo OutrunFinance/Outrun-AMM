@@ -6,6 +6,7 @@ import {Test, console2} from "forge-std/Test.sol";
 import {BaseDeploy} from "./BaseDeploy.t.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/IOwnable.sol";
 
 contract liquidityTest is BaseDeploy {
     uint256 MINIMUM_LIQUIDITY = 10 ** 3;
@@ -100,7 +101,11 @@ contract liquidityTest is BaseDeploy {
             uint256 amountETH = swapRouter.removeLiquidityETHSupportingFeeOnTransferTokens(
                 tokens[0], liquidity / 2, 0, 0, deployer, block.timestamp + 1 days
             );
+            
+            vm.startPrank(IOwnable(OutswapV1Factory).owner());
             poolFactory.setFeeTo(deployer);
+            vm.stopPrank();
+
             amountETH = swapRouter.removeLiquidityETHSupportingFeeOnTransferTokens(
                 tokens[0], liquidity / 2, 0, 0, deployer, block.timestamp + 1 days
             );
