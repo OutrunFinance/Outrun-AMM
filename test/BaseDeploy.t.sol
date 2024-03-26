@@ -25,15 +25,19 @@ contract BaseDeploy is Test {
     address OutswapV1Factory = 0x3cEca1C6e131255e7C95788D40581934E84A1F9d;
     address OutswapV1Router = 0xd48CA5f376A9abbee74997c226a55D71b4168790;
 
-    IOutswapV1Factory internal poolFactory = IOutswapV1Factory(OutswapV1Factory);
-    IOutswapV1Router internal swapRouter = IOutswapV1Router(OutswapV1Router);
+    IOutswapV1Factory public poolFactory = IOutswapV1Factory(OutswapV1Factory);
+    IOutswapV1Router public swapRouter = IOutswapV1Router(OutswapV1Router);
 
-    address internal RETH9 = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
-    address internal RUSD9 = 0x671540e1569b8E82605C3eEA5939d326C4Eda457;
-    address internal USDB = 0x4200000000000000000000000000000000000022;
+    address public RETH9 = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
+    IRETH public reth = IRETH(RETH9);
+    address public RUSD9 = 0x671540e1569b8E82605C3eEA5939d326C4Eda457;
+    IRUSD public rusd = IRUSD(RUSD9);
+    address public USDB = 0x4200000000000000000000000000000000000022;
+    IUSDB public usdb = IUSDB(USDB);
 
-    address internal ethVault = 0x6a120b799AEF815fDf2a571B4BD7Fcfe93160135;
-    address internal usdVault = 0xC92d49c71b6E7B9724E4891e8594907F40aD9AFA;
+
+    address public ethVault = 0x6a120b799AEF815fDf2a571B4BD7Fcfe93160135;
+    address public usdVault = 0xC92d49c71b6E7B9724E4891e8594907F40aD9AFA;
 
     uint256 internal tokenNum = 3;
 
@@ -59,11 +63,17 @@ contract BaseDeploy is Test {
         vm.startPrank(deployer);
         IRETH(RETH9).deposit{value: 20 ether}();
 
-        vm.mockCall(USDB, abi.encodeWithSelector(IERC20.transferFrom.selector, deployer, usdVault, 10 ether), abi.encode(1));
-        IRUSD(RUSD9).deposit(10 ether);
+        RUSDDeposit(10 ether);
 
         getToken(tokenNum);
         vm.stopPrank();
+    }
+
+    function RUSDDeposit(uint256 amount) internal {
+        vm.mockCall(
+            USDB, abi.encodeWithSelector(IERC20.transferFrom.selector, deployer, usdVault, amount), abi.encode(1)
+        );
+        IRUSD(RUSD9).deposit(amount);
     }
 
     function test_getINIT_CODEJson() internal {
@@ -113,7 +123,8 @@ contract BaseDeploy is Test {
         virtual
         returns (uint256, uint256, uint256)
     {
-        (tokenA, tokenB, amount0, amount1) = tokenA < tokenB ? (tokenA, tokenB, amount0, amount1) : (tokenB, tokenA, amount1, amount0);
+        (tokenA, tokenB, amount0, amount1) =
+            tokenA < tokenB ? (tokenA, tokenB, amount0, amount1) : (tokenB, tokenA, amount1, amount0);
 
         return IOutswapV1Router(router).addLiquidity(
             tokenA, tokenB, amount0, amount1, 0, 0, deployer, block.timestamp + 1 days

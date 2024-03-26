@@ -7,8 +7,9 @@ interface IOutETHVault {
         uint256 protocolFeeRate;
     }
 
-
-    /** error **/
+    /**
+     * error *
+     */
     error ZeroInput();
 
     error PermissionDenied();
@@ -17,8 +18,9 @@ interface IOutETHVault {
 
     error FlashLoanRepayFailed();
 
-
-    /** view **/
+    /**
+     * view *
+     */
     function RETHStakeManager() external view returns (address);
 
     function revenuePool() external view returns (address);
@@ -27,8 +29,9 @@ interface IOutETHVault {
 
     function flashLoanFee() external view returns (FlashLoanFee memory);
 
-
-    /** setter **/
+    /**
+     * setter *
+     */
     function setProtocolFee(uint256 protocolFee_) external;
 
     function setFlashLoanFee(uint256 _providerFeeRate, uint256 _protocolFeeRate) external;
@@ -37,14 +40,15 @@ interface IOutETHVault {
 
     function setRETHStakeManager(address _RETHStakeManager) external;
 
-
-    /** function **/
+    /**
+     * function *
+     */
     function initialize(
         address operator_,
-        address stakeManager_, 
-        address revenuePool_, 
-        uint256 protocolFee_, 
-        uint256 providerFeeRate_, 
+        address stakeManager_,
+        address revenuePool_,
+        uint256 protocolFee_,
+        uint256 providerFeeRate_,
         uint256 protocolFeeRate_
     ) external;
 
@@ -56,8 +60,9 @@ interface IOutETHVault {
 
     function configurePointsOperator(address operator) external;
 
-
-    /** event **/
+    /**
+     * event *
+     */
     event ClaimETHYield(uint256 amount);
 
     event FlashLoan(address indexed receiver, uint256 amount);
