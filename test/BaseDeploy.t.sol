@@ -63,7 +63,8 @@ contract BaseDeploy is Test {
         vm.startPrank(deployer);
         IRETH(RETH9).deposit{value: 20 ether}();
 
-        RUSDDeposit(10 ether);
+        IERC20(USDB).approve(RUSD9, type(uint256).max);
+        IRUSD(RUSD9).deposit(10 ether);
 
         getToken(tokenNum);
         vm.stopPrank();
