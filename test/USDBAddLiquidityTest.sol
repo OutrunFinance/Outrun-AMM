@@ -12,7 +12,7 @@ contract RouterUSDBMOCK is BaseDeploy {
 
     fallback() external payable {}
 
-    /* using USDB and token0 to add liquidity */
+    /* add liquidity */
     function test_addLiquidityUSDB() public {
         (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(tokens[0],1 ether,1 ether);
         assertEq(liquidity, 1 ether - MINIMUM_LIQUIDITY);
@@ -61,7 +61,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         vm.stopPrank();
     }
 
-    function testAddLiquidityExpired() public {
+    function test_AddLiquidityExpired() public {
         vm.startPrank(deployer);
         rusd.approve(address(swapRouter), 1 ether);
         IERC20(tokens[0]).approve(address(swapRouter), 1 ether);
@@ -107,6 +107,43 @@ contract RouterUSDBMOCK is BaseDeploy {
         uint256[] memory amountsCal = OutswapV1Library.getAmountsOut(OutswapV1Factory, 5000, path);
         assertEq(amounts[0], amountsCal[0]);
     }
+
+    function test_swapExactTokensForUSDB() public {
+        (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(tokens[0],1 ether,1 ether);
+        addLiquidityTokenAndUSDB(tokens[0],1 ether,1 ether);
+
+        address[] memory path = new address[](2);
+        path[1] = RUSD9;
+        path[0] = tokens[0];
+
+        vm.startPrank(deployer);
+        IERC20(tokens[0]).approve(address(swapRouter), 5000);
+        
+        uint256[] memory amounts = swapRouter.swapTokensForExactUSDB(4000, 4500, path, address(this), block.timestamp + 100);
+        vm.stopPrank();
+
+        uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, 4000, path);
+        assertEq(amounts[0], amountsCal[0]);
+    }
+
+    function test_swapExactETHForUSDB() public {
+        (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(RETH9,1 ether,1 ether);
+        addLiquidityTokenAndUSDB(tokens[0],1 ether,1 ether);
+
+        address[] memory path = new address[](2);
+        path[1] = RUSD9;
+        path[0] = RETH9;
+
+        vm.startPrank(deployer);
+        IERC20(RETH9).approve(address(swapRouter), 5000);
+        
+        uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), block.timestamp + 100);
+        vm.stopPrank();
+
+        uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, 4000, path);
+        assertEq(amounts[0], amountsCal[0]);
+    }
+
 
     /* function */
     function addLiquidityTokenAndUSDB(address token, uint256 tokenAmount, uint256 usdbAmount) internal returns (uint256 amount0, uint256 amount1, uint256 liquidity, address pair) {
@@ -172,67 +209,4 @@ contract RouterUSDBMOCK is BaseDeploy {
         }
 
     }
-
-    /* 
-    function swapExactUSDBForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapTokensForExactUSDB(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapExactTokensForUSDB(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapUSDBForExactTokens(
-        uint256 amountIn,
-        uint256 amountOut,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    /**
-     * SWAP with Pair(ETH, USDB) *
-     */
-    /*
-    function swapExactETHForUSDB(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
-        external
-        payable
-        returns (uint256[] memory amounts);
-
-    function swapUSDBForExactETH(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapExactUSDBForETH(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapETHForExactUSDB(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
-        external
-        payable
-        returns (uint256[] memory amounts); */
 }
