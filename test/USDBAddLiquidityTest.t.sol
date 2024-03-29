@@ -140,73 +140,16 @@ contract RouterUSDBMOCK is BaseDeploy {
         uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), block.timestamp + 100);
         vm.stopPrank();
 
-        uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, 4000, path);
+        uint256[] memory amountsCal = OutswapV1Library.getAmountsOut(OutswapV1Factory, 4500, path);
         assertEq(amounts[0], amountsCal[0]);
     }
 
-
-    /* function */
-    function addLiquidityTokenAndUSDB(address token, uint256 tokenAmount, uint256 usdbAmount) internal returns (uint256 amount0, uint256 amount1, uint256 liquidity, address pair) {
-        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, RUSD9);
-        pair = OutswapV1Library.pairFor(
-            address(poolFactory),
-            _token0,
-            _token1
-        );
-
-        vm.startPrank(deployer);
-
-        IERC20(USDB).approve(address(swapRouter), usdbAmount);
-        if(token != RETH9) {
-            IERC20(tokens[0]).approve(address(swapRouter), tokenAmount);
-            (amount0, amount1, liquidity) = swapRouter.addLiquidityUSDB(
-                tokens[0],
-                tokenAmount,
-                usdbAmount,
-                tokenAmount,
-                usdbAmount,
-                address(this),
-                block.timestamp + 1
-            );
-        }
-        else {
-            (amount0, amount1, liquidity) = swapRouter.addLiquidityETHAndUSDB{value: tokenAmount}(
-                usdbAmount,
-                tokenAmount,
-                usdbAmount,
-                address(this),
-                block.timestamp + 1
-            );
-        }
-
-        assertEq(poolFactory.getPair(_token0, _token1), pair);
-        vm.stopPrank();
+    /* helper */
+    function addLiquidityTokenAndUSDB(address token, uint256 amountToken, uint256 amountUSDB) internal returns (uint256 amount0, uint256 amount1, uint256 liquidity, address pair) {
+        return super.addLiquidityTokenAndUSDB(token, amountToken, amountUSDB, address(this));
     }
 
     function removeLiquidityTokenAndUSDB(address token, uint256 amount) internal {
-        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, RUSD9);
-        address pair = OutswapV1Library.pairFor(address(poolFactory), _token0, _token1 );
-
-        IERC20(pair).approve(address(swapRouter), amount);
-        if(token != RETH9) {
-            swapRouter.removeLiquidityUSDB(
-                tokens[0],
-                amount,
-                0,
-                0,
-                address(this),
-                block.timestamp + 1
-            );
-        }
-        else {
-            swapRouter.removeLiquidityETHAndUSDB(
-                amount,
-                0,
-                0,
-                address(this),
-                block.timestamp + 1
-            );
-        }
-
+        super.removeLiquidityTokenAndUSDB(token, amount, address(this));
     }
 }
