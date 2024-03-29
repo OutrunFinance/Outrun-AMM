@@ -3,8 +3,7 @@ pragma solidity ^0.8.24;
 pragma abicoder v2;
 
 import {Test, console2} from "forge-std/Test.sol";
-// import {OutswapV1Router} from "src/router/OutswapV1Router.sol";
-// import { OutswapV1Pair } from "src/core/OutswapV1Pair.sol";
+import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
 
 import {TestERC20} from "./utils/TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -13,6 +12,7 @@ import {IRETH} from "./interfaces/IRETH.sol";
 import {IUSDB} from "./interfaces/IUSDB.sol";
 import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
 import {IOutswapV1Router} from "src/router/interfaces/IOutswapV1Router.sol";
+import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
 
 string constant RETHAtricle = "test/utils/RETH.json";
 string constant RUSDAtricle = "test/utils/RUSD.json";
@@ -20,6 +20,7 @@ string constant factoryAtricle = "out/OutswapV1Factory.sol/OutswapV1Factory.json
 string constant routerAtricle = "out/OutswapV1Router.sol/OutswapV1Router.json";
 
 contract BaseDeploy is Test {
+    
     address public deployer = vm.envAddress("LOCAL_DEPLOYER");
 
     address OutswapV1Factory = 0x3cEca1C6e131255e7C95788D40581934E84A1F9d;
@@ -70,10 +71,8 @@ contract BaseDeploy is Test {
         vm.stopPrank();
     }
 
-    function test_getINIT_CODEJson() internal {
-        getINIT_CODEJson();
-    }
-
+    /* FUNCTION */
+    /* ENV CONFIG */
     function getINIT_CODEJson() internal view {
         bytes memory bytecode = abi.encodePacked(vm.getCode("OutswapV1Pair.sol:OutswapV1Pair"));
         console2.logBytes32(keccak256(bytecode));
@@ -104,6 +103,7 @@ contract BaseDeploy is Test {
         }
     }
 
+    /* ADD LIQUIDTY */
     function addLiquidity(address tokenA, address tokenB, uint256 amount0, uint256 amount1)
         internal
         virtual
@@ -125,6 +125,71 @@ contract BaseDeploy is Test {
         );
     }
 
+    function addLiquidityTokenAndUSDB(address token, uint256 tokenAmount, uint256 usdbAmount, address recipet) internal virtual returns (uint256 amount0, uint256 amount1, uint256 liquidity, address pair) {
+        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, RUSD9);
+        pair = OutswapV1Library.pairFor(
+            address(poolFactory),
+            _token0,
+            _token1
+        );
+
+        vm.startPrank(deployer);
+
+        IERC20(USDB).approve(address(swapRouter), usdbAmount);
+        if(token != RETH9) {
+            IERC20(tokens[0]).approve(address(swapRouter), tokenAmount);
+            (amount0, amount1, liquidity) = swapRouter.addLiquidityUSDB(
+                tokens[0],
+                tokenAmount,
+                usdbAmount,
+                tokenAmount,
+                usdbAmount,
+                recipet,
+                block.timestamp + 1
+            );
+        }
+        else {
+            (amount0, amount1, liquidity) = swapRouter.addLiquidityETHAndUSDB{value: tokenAmount}(
+                usdbAmount,
+                tokenAmount,
+                usdbAmount,
+                recipet,
+                block.timestamp + 1
+            );
+        }
+
+        assertEq(poolFactory.getPair(_token0, _token1), pair);
+        vm.stopPrank();
+    }
+
+    /* REMOVE LIQUIDITY */
+    function removeLiquidityTokenAndUSDB(address token, uint256 amount, address recipet) internal virtual {
+        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, RUSD9);
+        address pair = OutswapV1Library.pairFor(address(poolFactory), _token0, _token1 );
+
+        IERC20(pair).approve(address(swapRouter), amount);
+        if(token != RETH9) {
+            swapRouter.removeLiquidityUSDB(
+                tokens[0],
+                amount,
+                0,
+                0,
+                recipet,
+                block.timestamp + 1
+            );
+        }
+        else {
+            swapRouter.removeLiquidityETHAndUSDB(
+                amount,
+                0,
+                0,
+                recipet,
+                block.timestamp + 1
+            );
+        }
+
+    }
+    
     function safeTransferFrom(address token, address from, address to, uint256 value) internal {
         (bool success, bytes memory data) =
             token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, value));
