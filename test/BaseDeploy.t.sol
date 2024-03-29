@@ -70,13 +70,6 @@ contract BaseDeploy is Test {
         vm.stopPrank();
     }
 
-    function RUSDDeposit(uint256 amount) internal {
-        vm.mockCall(
-            USDB, abi.encodeWithSelector(IERC20.transferFrom.selector, deployer, usdVault, amount), abi.encode(1)
-        );
-        IRUSD(RUSD9).deposit(amount);
-    }
-
     function test_getINIT_CODEJson() internal {
         getINIT_CODEJson();
     }
