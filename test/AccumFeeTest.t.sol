@@ -9,6 +9,7 @@ import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "src/libraries/FullMath.sol";
 
 
 contract ACCUMFEEMOCK is BaseDeploy {
@@ -19,6 +20,9 @@ contract ACCUMFEEMOCK is BaseDeploy {
     uint256 totalSupply;
     uint256 accumFeePerLP;
     uint256 kLast;
+    uint256 liquidity;
+
+    uint256 Q128 = 0x100000000000000000000000000000000;
 
     address[] internal tokenToUsdPath;
 
@@ -28,7 +32,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
 
         /* set pair */
         // token:USDB = 4:8
-        (,,, tokenPair) = addLiquidityTokenAndUSDB(tokens[0], 4 ether, 8 ether);
+        (,, liquidity, tokenPair) = addLiquidityTokenAndUSDB(tokens[0], 4 ether, 8 ether);
 
         totalSupply = IERC20(tokenPair).totalSupply();
         accumFeePerLP = IAccumFeePerLP(tokenPair).accumFeePerLP();
@@ -121,8 +125,10 @@ contract ACCUMFEEMOCK is BaseDeploy {
         vm.stopPrank();
 
         accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
+        uint256 feeGrowth = FullMath.mulDiv(accumFeePerLP, liquidity, Q128);
         assert(accumFeePerLP > 0);
         console2.log("accumFeePerLP:", accumFeePerLP); // accumFeePerLP: 374
+        console2.log("feeGrowth: ", feeGrowth);
     }
 
     function test_MintFee_Fix_In_Times() public {
@@ -130,27 +136,30 @@ contract ACCUMFEEMOCK is BaseDeploy {
 
         vm.startPrank(deployer);
         for (int i = 0; i < 10; i++){
+            kLast = IOutswapV1Pair(tokenPair).kLast();
             IERC20(tokenToUsdPath[0]).approve(address(swapRouter), amountIn);
             swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), block.timestamp);
             accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
         }
         vm.stopPrank();
 
+        uint256 feeGrowth = FullMath.mulDiv(accumFeePerLP, liquidity, Q128);
+
         assert(accumFeePerLP > 0);
         console2.log("accumFeePerLP: ", accumFeePerLP);
+        console2.log("feeGrowth: ", feeGrowth);
     }
 
     function get_accumFeePerLP(uint256 accumFeePerLPNow) public returns (uint256) {
         (uint112 reserve0, uint112 reserve1, ) = IOutswapV1Pair(tokenPair).getReserves();
         uint256 k = uint256(reserve0) * uint256(reserve1);
-        uint256 accumFeePerLP_update = accumFeePerLPNow + _accumulate_update(Math.sqrt(k), Math.sqrt(kLast));
-        return accumFeePerLP_update;
+        return _accumulate_update(Math.sqrt(k), Math.sqrt(kLast));
     }
 
     function _accumulate_update(uint256 rootK, uint256 rootKLast) internal  returns (uint256) {
         // emit log_named_decimal_uint("(rootK - rootKLast):", (rootK - rootKLast), 18);
         // emit log_named_decimal_uint("OutswapV1Pair", totalSupply, 18);
-        return accumFeePerLP + ((rootK - rootKLast) * 10e18  / totalSupply);
+        return accumFeePerLP + FullMath.mulDiv(rootK - rootKLast, Q128, totalSupply);
     }
 
     /* Helper */
