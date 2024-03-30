@@ -9,7 +9,7 @@ import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "src/libraries/FullMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 
 contract ACCUMFEEMOCK is BaseDeploy {
@@ -125,7 +125,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
         vm.stopPrank();
 
         accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
-        uint256 feeGrowth = FullMath.mulDiv(accumFeePerLP, liquidity, Q128);
+        uint256 feeGrowth = Math.mulDiv(accumFeePerLP, liquidity, Q128);
         assert(accumFeePerLP > 0);
         console2.log("accumFeePerLP:", accumFeePerLP); // accumFeePerLP: 374
         console2.log("feeGrowth: ", feeGrowth);
@@ -143,7 +143,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
         }
         vm.stopPrank();
 
-        uint256 feeGrowth = FullMath.mulDiv(accumFeePerLP, liquidity, Q128);
+        uint256 feeGrowth = Math.mulDiv(accumFeePerLP, liquidity, Q128);
 
         assert(accumFeePerLP > 0);
         console2.log("accumFeePerLP: ", accumFeePerLP);
@@ -159,7 +159,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
     function _accumulate_update(uint256 rootK, uint256 rootKLast) internal  returns (uint256) {
         // emit log_named_decimal_uint("(rootK - rootKLast):", (rootK - rootKLast), 18);
         // emit log_named_decimal_uint("OutswapV1Pair", totalSupply, 18);
-        return accumFeePerLP + FullMath.mulDiv(rootK - rootKLast, Q128, totalSupply);
+        return accumFeePerLP + Math.mulDiv(rootK - rootKLast, Q128, totalSupply);
     }
 
     /* Helper */

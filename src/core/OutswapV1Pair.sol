@@ -56,10 +56,10 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     // view current maker fee of account
     function viewMakerFee(address account) external view override returns (uint256 makerFeeLP, uint256 _amount0, uint256 _amount1) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); 
-        uint256 _accumFeePerLP = accumFeePerLP + (Math.sqrt(uint256(_reserve0) * uint256(_reserve1)) - Math.sqrt(kLast)) / totalSupply;
+        uint256 _accumFeePerLP = accumFeePerLP + Math.mulDiv(Math.sqrt(uint256(_reserve0) * uint256(_reserve1)) - Math.sqrt(kLast), Q128, totalSupply);
         
         uint256 makerFeeLast = pendingFees[account];
-        uint256 lpFee = balanceOf(account) * (_accumFeePerLP - makerFeeLast);
+        uint256 lpFee = Math.mulDiv(balanceOf(account), (_accumFeePerLP - makerFeeLast), Q128);
         if (lpFee > 0) {
             makerFeeLP = _feeTo() != address(0) ? makerFeeLast + lpFee * 3 / 4 : makerFeeLast + lpFee;
         }
@@ -249,7 +249,8 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
                 if (lpFee > 0) {
                     if (feeTo != address(0)) {
                         _mint(feeTo, lpFee / 4);
-                        pendingFees[msgSender] += lpFee * 3 / 4;
+                        // pendingFees[msgSender] += lpFee * 3 / 4;
+                        pendingFees[msgSender] += (lpFee - lpFee * 1 / 4);
                     } else {
                         pendingFees[msgSender] += lpFee;
                     }
