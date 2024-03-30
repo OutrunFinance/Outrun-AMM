@@ -11,8 +11,8 @@ import "./interfaces/IOutswapV1Callee.sol";
 import "../libraries/UQ112x112.sol";
 import "../blast/GasManagerable.sol";
 
-
 contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
+    uint256 Q128 = 0x100000000000000000000000000000000;
     using UQ112x112 for uint224;
 
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
@@ -160,12 +160,6 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
-
-        {   
-            uint256 k = uint256(reserve0) * uint256(reserve1);
-            accumFeePerLP = _accumulate(Math.sqrt(k), Math.sqrt(kLast));
-            kLast = k;
-        }
         
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
     }
@@ -246,12 +240,12 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
             if (rootK > rootKLast) {
                 uint256 _accumFeePerLP = accumFeePerLP;
                 if (totalSupply != 0) {
-                    _accumFeePerLP = accumFeePerLP + (rootK - rootKLast) / totalSupply;
+                    _accumFeePerLP = _accumulate(rootK, rootKLast);
                     accumFeePerLP = _accumFeePerLP;
                 }
 
                 address msgSender = msg.sender;
-                uint256 lpFee = balanceOf(msgSender) * (_accumFeePerLP - makerFeePerLP[msgSender]);
+                uint256 lpFee = Math.mulDiv(balanceOf(msgSender), (_accumFeePerLP - makerFeePerLP[msgSender]), Q128);
                 if (lpFee > 0) {
                     if (feeTo != address(0)) {
                         _mint(feeTo, lpFee / 4);
@@ -266,7 +260,8 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     }
 
     function _accumulate(uint256 rootK, uint256 rootKLast) internal view returns (uint256) {
-        return accumFeePerLP + ((rootK - rootKLast) / totalSupply);
+        // return accumFeePerLP + ((rootK - rootKLast) / totalSupply);
+        return accumFeePerLP + Math.mulDiv(rootK - rootKLast, Q128, totalSupply);
     }
 
     function _feeTo() view internal returns (address) {
