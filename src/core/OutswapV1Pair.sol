@@ -9,8 +9,8 @@ import "./interfaces/IOutswapV1Pair.sol";
 import "./interfaces/IOutswapV1Factory.sol";
 import "./interfaces/IOutswapV1Callee.sol";
 import "../libraries/UQ112x112.sol";
+import "../libraries/FixedPoint128.sol";
 import "../blast/GasManagerable.sol";
-
 
 contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     using UQ112x112 for uint224;
@@ -30,9 +30,11 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     uint256 public price1CumulativeLast;
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
     
-    uint256 public accumFeePerLP;
-    mapping(address account => uint256) public makerFeePerLP;
-    mapping(address account => uint256) public pendingFees;
+    uint256 public feeGrowthX128;   // accumulate maker fee per LP X128
+    uint256 public feeGrowthRecordPFX128;   // record the feeGrowthX128 when claim protocol fee
+    uint256 public unClaimedProtocolFeeX128;
+    mapping(address account => uint256) public feeGrowthRecordX128; // record the feeGrowthX128 when calc maker's append fee
+    mapping(address account => uint256) public unClaimedFeesX128;
 
     uint256 private unlocked = 1;
 
@@ -53,20 +55,24 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         _blockTimestampLast = blockTimestampLast;
     }
 
-    // view current maker fee of account
-    function viewMakerFee(address account) external view override returns (uint256 makerFeeLP, uint256 _amount0, uint256 _amount1) {
+    /**
+     * @dev View unclaimed maker fee
+     */
+    function viewUnClaimedFee() external view override returns (uint256 amount0, uint256 amount1) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); 
-        uint256 _accumFeePerLP = accumFeePerLP + (Math.sqrt(uint256(_reserve0) * uint256(_reserve1)) - Math.sqrt(kLast)) / totalSupply;
+        uint256 _feeGrowthX128 = feeGrowthX128 
+            + (Math.sqrt(uint256(_reserve0) * uint256(_reserve1)) - Math.sqrt(kLast)) * FixedPoint128.Q128 / totalSupply;
         
-        uint256 makerFeeLast = pendingFees[account];
-        uint256 lpFee = balanceOf(account) * (_accumFeePerLP - makerFeeLast);
-        if (lpFee > 0) {
-            makerFeeLP = _feeTo() != address(0) ? makerFeeLast + lpFee * 3 / 4 : makerFeeLast + lpFee;
+        address msgSender = msg.sender;
+        uint256 feeAppendX128 = balanceOf(msgSender) * (_feeGrowthX128 - feeGrowthRecordX128[msgSender]);
+        uint256 unClaimedFeeX128 = unClaimedFeesX128[msgSender];
+        if (feeAppendX128 > 0) {
+            unClaimedFeeX128 += _feeTo() == address(0) ? unClaimedFeeX128 + feeAppendX128 : unClaimedFeeX128 + feeAppendX128 * 3 / 4;
         }
 
         uint256 _totalSupply = totalSupply;
-        _amount0 = makerFeeLP * _reserve0 / _totalSupply; 
-        _amount1 = makerFeeLP * _reserve1 / _totalSupply;
+        amount0 = (unClaimedFeeX128 * _reserve0 / _totalSupply) / FixedPoint128.Q128; 
+        amount1 = (unClaimedFeeX128 * _reserve1 / _totalSupply) / FixedPoint128.Q128;
     }
 
     // called once by the factory at time of deployment
@@ -76,7 +82,11 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         token1 = _token1;
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    /**
+     * @dev Mint liquidity (LP)
+     * @param to - addree to receive LP token and calc this address's maker fee
+     * @notice this low-level function should be called from a contract which performs important safety checks
+     */
     function mint(address to) external lock returns (uint256 liquidity) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
@@ -84,7 +94,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         uint256 amount0 = balance0 - _reserve0;
         uint256 amount1 = balance1 - _reserve1;
 
-        _mintFee(_reserve0, _reserve1);
+        _calcFeeX128(to);
         uint256 _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         if (_totalSupply == 0) {
             liquidity = Math.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
@@ -100,7 +110,11 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         emit Mint(msg.sender, to, amount0, amount1);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    /**
+     * @dev Burn liquidity (LP) and withdraw token0 and token1
+     * @param to - addree to receive token and calc this address's maker fee
+     * @notice - this low-level function should be called from a contract which performs important safety checks
+     */
     function burn(address to) external lock returns (uint256 amount0, uint256 amount1) {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         address _token0 = token0; // gas savings
@@ -109,7 +123,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
         uint256 liquidity = balanceOf(address(this));
 
-        _mintFee(_reserve0, _reserve1);
+        _calcFeeX128(to);
         uint256 _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
@@ -125,7 +139,13 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         emit Burn(msg.sender, amount0, amount1, to);
     }
 
-    // this low-level function should be called from a contract which performs important safety checks
+    /**
+     * @dev Swap token
+     * @param amount0Out - Amount of token0 output
+     * @param amount1Out - Amount of token0 output
+     * @param to - Address to output
+     * @notice - this low-level function should be called from a contract which performs important safety checks
+     */
     function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external lock {
         require(amount0Out > 0 || amount1Out > 0, "OutswapV1: INSUFFICIENT_OUTPUT_AMOUNT");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
@@ -163,28 +183,55 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
 
         {   
             uint256 k = uint256(reserve0) * uint256(reserve1);
-            accumFeePerLP = _accumulate(Math.sqrt(k), Math.sqrt(kLast));
+            feeGrowthX128 += ((Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128/ totalSupply);
             kLast = k;
         }
         
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
     }
 
-    // claim maker fee
-    function claimMakerFee() external override returns (uint256 makerFee) {
+    /**
+     * @dev Claim all the maker fee of msgSender
+     * @notice - Claim global protocol fee simultaneously
+     */
+    function claimMakerFee() external override returns (uint256 amount0, uint256 amount1) {
         address msgSender = msg.sender;
-        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
-        _mintFee(_reserve0, _reserve1);
-        kLast = uint256(_reserve0) * uint256(_reserve1);
+        address feeTo= _calcFeeX128(msgSender);
 
-        makerFee = pendingFees[msgSender];
-        if (makerFee > 0) {
-            pendingFees[msgSender] = 0;
-            _mint(msgSender, makerFee);
-        }
+        uint256 unClaimedFee = unClaimedFeesX128[msgSender] / FixedPoint128.Q128;
+        unClaimedFeesX128[msgSender] = 0;
+        _mint(address(this), unClaimedFee);
+
+        // claim protocol fee
+        uint256 unClaimedProtocolFee = unClaimedProtocolFeeX128 / FixedPoint128.Q128;
+        unClaimedProtocolFeeX128 = 0;
+        _mint(feeTo, unClaimedProtocolFee);
+
+        // burn the fee of LP 
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
+        address _token0 = token0;
+        address _token1 = token1;
+        uint256 _totalSupply = totalSupply;
+        amount0 = unClaimedFee * _reserve0 / _totalSupply;
+        amount1 = unClaimedFee * _reserve1 / _totalSupply;
+        require(amount0 > 0 && amount1 > 0, "OutswapV1: INSUFFICIENT_LIQUIDITY_BURNED");
+        _burn(address(this), unClaimedFee);
+        _safeTransfer(_token0, msgSender, amount0);
+        _safeTransfer(_token1, msgSender, amount1);
+
+        _update(
+            IERC20(_token0).balanceOf(address(this)), 
+            IERC20(_token1).balanceOf(address(this)), 
+            _reserve0, 
+            _reserve1
+        );
+        kLast = uint256(reserve0) * uint256(reserve1); 
     }
 
-    // force balances to match reserves
+    /**
+     * @dev Force balances to match reserves
+     * @param to - Address to receive excess tokens
+     */
     function skim(address to) external lock {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
@@ -192,26 +239,24 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         _safeTransfer(_token1, to, IERC20(_token1).balanceOf(address(this)) - reserve1);
     }
 
-    // force reserves to match balances
+    /**
+     * @dev Force reserves to match balances
+     */
     function sync() external lock {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
-    function transfer(address to, uint256 value) public override returns (bool) {
+    function transfer(address to, uint256 value) external override returns (bool) {
         address owner = _msgSender();
-        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
-        _mintFee(_reserve0, _reserve1);
-        kLast = uint256(_reserve0) * uint256(_reserve1);
+        _calcFeeX128(owner);
         _transfer(owner, to, value);
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+    function transferFrom(address from, address to, uint256 value) external override returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, value);
-        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
-        _mintFee(_reserve0, _reserve1);
-        kLast = uint256(_reserve0) * uint256(_reserve1);
+        _calcFeeX128(from);
         _transfer(from, to, value);
         return true;
     }
@@ -221,7 +266,9 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         require(success && (data.length == 0 || abi.decode(data, (bool))), "OutswapV1: TRANSFER_FAILED");
     }
 
-    // update reserves and, on the first call per block, price accumulators
+    /**
+     * @dev update reserves and, on the first call per block, price accumulators
+     */
     function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {
         require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "OutswapV1: OVERFLOW");
         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
@@ -237,36 +284,36 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         emit Sync(reserve0, reserve1);
     }
 
-    // if fee is on, mint liquidity equivalent to 1/4th of the growth in sqrt(k)
-    function _mintFee(uint112 _reserve0, uint112 _reserve1) private {
-        address feeTo = _feeTo();
-        if (kLast != 0) {
-            uint256 rootK = Math.sqrt(uint256(_reserve0) * uint256(_reserve1));
-            uint256 rootKLast = Math.sqrt(kLast);
-            if (rootK > rootKLast) {
-                uint256 _accumFeePerLP = accumFeePerLP;
-                if (totalSupply != 0) {
-                    _accumFeePerLP = accumFeePerLP + (rootK - rootKLast) / totalSupply;
-                    accumFeePerLP = _accumFeePerLP;
+    /**
+     * @dev Calculate the maker fee and protocol fee
+     * @notice Protocol fee is 1/4
+     */
+    function _calcFeeX128(address to) private returns (address feeTo) {
+        uint256 _feeGrowthX128 = feeGrowthX128;
+        feeTo = _feeTo();
+
+        unchecked {
+            uint256 feeAppendX128 = balanceOf(to) * (_feeGrowthX128 - feeGrowthRecordX128[to]);
+            if (feeTo == address(0)) {
+                if (feeAppendX128 > 0) {
+                    unClaimedFeesX128[to] += feeAppendX128;
+                }
+            } else {
+                if (feeAppendX128 > 0) {
+                    unClaimedFeesX128[to] += feeAppendX128 * 3 / 4;
                 }
 
-                address msgSender = msg.sender;
-                uint256 lpFee = balanceOf(msgSender) * (_accumFeePerLP - makerFeePerLP[msgSender]);
-                if (lpFee > 0) {
-                    if (feeTo != address(0)) {
-                        _mint(feeTo, lpFee / 4);
-                        pendingFees[msgSender] += lpFee * 3 / 4;
-                    } else {
-                        pendingFees[msgSender] += lpFee;
-                    }
+                uint256 _feeGrowthRecordPFX128 = feeGrowthRecordPFX128;
+                uint256 feeAppendPFX128 = totalSupply * (_feeGrowthX128 - _feeGrowthRecordPFX128);
+                if (feeAppendPFX128 > 0) {
+                    unClaimedProtocolFeeX128 += feeAppendPFX128 / 4;
                 }
-                makerFeePerLP[msgSender] = _accumFeePerLP;
+                
+                feeGrowthRecordPFX128 = _feeGrowthX128;
             }
         }
-    }
 
-    function _accumulate(uint256 rootK, uint256 rootKLast) internal view returns (uint256) {
-        return accumFeePerLP + ((rootK - rootKLast) / totalSupply);
+        feeGrowthRecordX128[to] = _feeGrowthX128;
     }
 
     function _feeTo() view internal returns (address) {
