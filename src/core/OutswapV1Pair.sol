@@ -29,9 +29,9 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
-    
-    uint256 public feeGrowthX128;   // accumulate maker fee per LP X128
-    uint256 public feeGrowthRecordPFX128;   // record the feeGrowthX128 when claim protocol fee
+
+    uint256 public feeGrowthX128; // accumulate maker fee per LP X128
+    uint256 public feeGrowthRecordPFX128; // record the feeGrowthX128 when claim protocol fee
     uint256 public unClaimedProtocolFeeX128;
     mapping(address account => uint256) public feeGrowthRecordX128; // record the feeGrowthX128 when calc maker's append fee
     mapping(address account => uint256) public unClaimedFeesX128;
@@ -59,19 +59,20 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
      * @dev View unclaimed maker fee
      */
     function viewUnClaimedFee() external view override returns (uint256 amount0, uint256 amount1) {
-        (uint112 _reserve0, uint112 _reserve1,) = getReserves(); 
-        uint256 _feeGrowthX128 = feeGrowthX128 
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
+        uint256 _feeGrowthX128 = feeGrowthX128
             + (Math.sqrt(uint256(_reserve0) * uint256(_reserve1)) - Math.sqrt(kLast)) * FixedPoint128.Q128 / totalSupply;
-        
+
         address msgSender = msg.sender;
         uint256 feeAppendX128 = balanceOf(msgSender) * (_feeGrowthX128 - feeGrowthRecordX128[msgSender]);
         uint256 unClaimedFeeX128 = unClaimedFeesX128[msgSender];
         if (feeAppendX128 > 0) {
-            unClaimedFeeX128 += _feeTo() == address(0) ? unClaimedFeeX128 + feeAppendX128 : unClaimedFeeX128 + feeAppendX128 * 3 / 4;
+            unClaimedFeeX128 +=
+                _feeTo() == address(0) ? unClaimedFeeX128 + feeAppendX128 : unClaimedFeeX128 + feeAppendX128 * 3 / 4;
         }
 
         uint256 _totalSupply = totalSupply;
-        amount0 = (unClaimedFeeX128 * _reserve0 / _totalSupply) / FixedPoint128.Q128; 
+        amount0 = (unClaimedFeeX128 * _reserve0 / _totalSupply) / FixedPoint128.Q128;
         amount1 = (unClaimedFeeX128 * _reserve1 / _totalSupply) / FixedPoint128.Q128;
     }
 
@@ -181,12 +182,12 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
 
         _update(balance0, balance1, _reserve0, _reserve1);
 
-        {   
+        {
             uint256 k = uint256(reserve0) * uint256(reserve1);
-            feeGrowthX128 += ((Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128/ totalSupply);
+            feeGrowthX128 += ((Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128 / totalSupply);
             kLast = k;
         }
-        
+
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
     }
 
@@ -196,7 +197,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
      */
     function claimMakerFee() external override returns (uint256 amount0, uint256 amount1) {
         address msgSender = msg.sender;
-        address feeTo= _calcFeeX128(msgSender);
+        address feeTo = _calcFeeX128(msgSender);
 
         uint256 unClaimedFee = unClaimedFeesX128[msgSender] / FixedPoint128.Q128;
         unClaimedFeesX128[msgSender] = 0;
@@ -207,7 +208,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         unClaimedProtocolFeeX128 = 0;
         _mint(feeTo, unClaimedProtocolFee);
 
-        // burn the fee of LP 
+        // burn the fee of LP
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         address _token0 = token0;
         address _token1 = token1;
@@ -220,12 +221,9 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         _safeTransfer(_token1, msgSender, amount1);
 
         _update(
-            IERC20(_token0).balanceOf(address(this)), 
-            IERC20(_token1).balanceOf(address(this)), 
-            _reserve0, 
-            _reserve1
+            IERC20(_token0).balanceOf(address(this)), IERC20(_token1).balanceOf(address(this)), _reserve0, _reserve1
         );
-        kLast = uint256(reserve0) * uint256(reserve1); 
+        kLast = uint256(reserve0) * uint256(reserve1);
     }
 
     /**
@@ -308,7 +306,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
                 if (feeAppendPFX128 > 0) {
                     unClaimedProtocolFeeX128 += feeAppendPFX128 / 4;
                 }
-                
+
                 feeGrowthRecordPFX128 = _feeGrowthX128;
             }
         }
@@ -316,7 +314,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         feeGrowthRecordX128[to] = _feeGrowthX128;
     }
 
-    function _feeTo() view internal returns (address) {
+    function _feeTo() internal view returns (address) {
         return IOutswapV1Factory(factory).feeTo();
     }
 }
