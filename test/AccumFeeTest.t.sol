@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 pragma abicoder v2;
 
-import {BaseDeploy} from "./BaseDeploy.t.sol";
+import {BaseDeploy} from "./utils/BaseDeploy.t.sol";
 import {console2} from "forge-std/Test.sol";
 
 import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';

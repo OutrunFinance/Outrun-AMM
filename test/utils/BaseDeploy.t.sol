@@ -3,28 +3,30 @@ pragma solidity ^0.8.24;
 pragma abicoder v2;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
+import {OutswapV1Library, OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
 
-import {TestERC20} from "./utils/TestERC20.sol";
+import {TestERC20} from "./TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IRUSD} from "./interfaces/IRUSD.sol";
-import {IRETH} from "./interfaces/IRETH.sol";
-import {IUSDB} from "./interfaces/IUSDB.sol";
+import {IRUSD} from "../interfaces/IRUSD.sol";
+import {IRETH} from "../interfaces/IRETH.sol";
+import {IUSDB} from "../interfaces/IUSDB.sol";
 import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
 import {IOutswapV1Router} from "src/router/interfaces/IOutswapV1Router.sol";
 import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
 
-string constant RETHAtricle = "test/utils/RETH.json";
-string constant RUSDAtricle = "test/utils/RUSD.json";
+string constant RETHAtricle = "test/RETH.json";
+string constant RUSDAtricle = "test/RUSD.json";
 string constant factoryAtricle = "out/OutswapV1Factory.sol/OutswapV1Factory.json";
 string constant routerAtricle = "out/OutswapV1Router.sol/OutswapV1Router.json";
 
+// INIT_CODE_PAIR_HASH
+// 0x15473738582da33766fff6f483b07801985dcd171e0eeb8fac981e06f93b6210
 contract BaseDeploy is Test {
     
     address public deployer = vm.envAddress("LOCAL_DEPLOYER");
 
-    address OutswapV1Factory = 0x3cEca1C6e131255e7C95788D40581934E84A1F9d;
-    address OutswapV1Router = 0xd48CA5f376A9abbee74997c226a55D71b4168790;
+    address OutswapV1Factory = 0x88fD87C733a661875fC94bbb49CE93e85bbb0dB4;
+    address OutswapV1Router = 0xb98E2bBb71A64Eb704f74A56Ad1C014B3530B79C;
 
     IOutswapV1Factory public poolFactory = IOutswapV1Factory(OutswapV1Factory);
     IOutswapV1Router public swapRouter = IOutswapV1Router(OutswapV1Router);

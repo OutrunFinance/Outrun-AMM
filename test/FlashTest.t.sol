@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 pragma abicoder v2;
 
-import {BaseDeploy, factoryAtricle, routerAtricle} from "./BaseDeploy.t.sol";
+import {BaseDeploy, factoryAtricle, routerAtricle} from "./utils/BaseDeploy.t.sol";
 import {console2} from "forge-std/console2.sol";
 
 import "src/libraries/OutswapV1Library.sol";

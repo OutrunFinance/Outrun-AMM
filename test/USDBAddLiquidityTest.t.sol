@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 pragma abicoder v2;
 
-import {BaseDeploy} from "./BaseDeploy.t.sol";
+import {BaseDeploy} from "./utils/BaseDeploy.t.sol";
 import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
