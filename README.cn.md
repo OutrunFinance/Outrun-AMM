@@ -3,7 +3,7 @@
 
 OutswapV1 基于 UniswapV2 构建，并针对 UniswapV2 进行了多项基于 Blast (Layer 2) 的本地化改进。具体来说，OutswapV1 引入了 orETH 和 orUSD 作为中间代币，并对做市手续费管理进行了重要改进。以下是其主要特点：
 
-+ **使用 orETH 和 orUSD 作为中间代币**：OutswapV1 引入了 orETH 和 orUSD 作为交易对中的中间代币。这种设计可以使得Outstake捕获到OutswapV1产生的原生收益，提高协议产生的收益，同时利用 Layer 2 的优势来降低交易成本和提高交易速度。
++ **使用 orETH 和 orUSD 作为中间代币**：OutswapV1 引入了 orETH 和 orUSD 作为交易对中的中间代币。这种设计可以使得Outstake捕获到OutswapV1产生的原生收益，提高协议产生的收益。
 
 + **流动性与做市手续费分离**：OutswapV1 改进了做市手续费的管理方式，将流动性与做市手续费的获取分离，使得用户可以在不移除流动性的情况下单独领取手续费。这种改进为流动性提供者带来了更大的灵活性和便利性。
 
