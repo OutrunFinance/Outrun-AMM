@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 interface IOutswapV1Router {
     function factory() external view returns (address);
-    function RETH() external view returns (address);
-    function RUSD() external view returns (address);
+    function ORETH() external view returns (address);
+    function ORUSD() external view returns (address);
     function USDB() external view returns (address);
 
     /**

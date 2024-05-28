@@ -2,10 +2,10 @@
 pragma solidity ^0.8.24;
 
 /**
- * @title Outrun Wrapped ETH interface
+ * @title Outrun USDB interface
  */
-interface IRETH {
-    function deposit() external payable;
+interface IORUSD {
+    function deposit(uint256 amount) external payable;
 
     function withdraw(uint256 amount) external;
 
