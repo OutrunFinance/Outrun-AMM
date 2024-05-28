@@ -9,7 +9,7 @@ OutswapV1 is built on UniswapV2 and includes several Blast (Layer 2)-based local
 + **Separation of Liquidity and Market-Making Fees**: OutswapV1 improves the management of market-making fees by separating liquidity from fee collection. This allows users to collect fees without removing liquidity, providing greater flexibility and convenience for liquidity providers.
 
 ### Why built based on UniswapV2 instead of UniswapV3?
-We analyzed the trading pair data on UniswapV3 and found that the majority of trading volume is concentrated in mainstream pairs and stablecoin pairs, such as **USDT/USDC, ETH/USDT, ETH/USDC, WBTC/USDT, ETH/ETH_LST**.
+We analyzed the trading pair data on UniswapV3 and found that the majority of trading volume is concentrated in mainstream pairs and stablecoin pairs, such as **USDT/USDC, ETH/USDT, ETH/USDC, WBTC/USDT, ETH/ETH_LST**. These assets often concentrate within well-known large protocols, which is a centralizing trend. For new protocols, it's challenging to accumulate a large amount of such assets in a short time, thereby accumulating Total Value Locked (TVL).
 
 Additionally, UniswapV3 requires professional position management, and for non-professional traders, the impermanent loss can be significant. Importantly, UniswapV3 is not friendly to new assets because it cannot provide stable liquidity and can lead to liquidity fragmentation. After all, when providing liquidity for a meme coin, it is difficult to determine the upper and lower bounds of the price range.
 
