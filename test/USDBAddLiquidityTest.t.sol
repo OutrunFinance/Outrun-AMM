@@ -19,7 +19,7 @@ contract RouterUSDBMOCK is BaseDeploy {
     }
 
     function test_addLiquidityETHAndUSDB() public {
-        (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(RETH9,1 ether,1 ether);
+        (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(ORETH,1 ether,1 ether);
         assertEq(liquidity, 1 ether - MINIMUM_LIQUIDITY);
     }
 
@@ -31,13 +31,13 @@ contract RouterUSDBMOCK is BaseDeploy {
         assertEq(liquidity, 1 ether - MINIMUM_LIQUIDITY);
 
         assertEq(IOutswapV1Pair(pair).token0(), tokens[0]);
-        assertEq(IOutswapV1Pair(pair).token1(), RUSD9);
+        assertEq(IOutswapV1Pair(pair).token1(), ORUSD);
 
         (uint256 reserve0, uint256 reserve1, ) = IOutswapV1Pair(pair)
             .getReserves();
         assertEq(reserve0, 1 ether);
         assertEq(reserve1, 1 ether);
-        assertEq(IERC20(RUSD9).balanceOf(address(pair)), 1 ether);
+        assertEq(IERC20(ORUSD).balanceOf(address(pair)), 1 ether);
         assertEq(IERC20(tokens[0]).balanceOf(address(pair)), 1 ether);
     }
 
@@ -87,8 +87,8 @@ contract RouterUSDBMOCK is BaseDeploy {
     }
 
     function test_removeLiquidityETHAndUSDB() public {
-        (,,uint256 liquidity, ) = addLiquidityTokenAndUSDB(RETH9,1 ether,1 ether);
-        removeLiquidityTokenAndUSDB(RETH9, liquidity);
+        (,,uint256 liquidity, ) = addLiquidityTokenAndUSDB(ORETH,1 ether,1 ether);
+        removeLiquidityTokenAndUSDB(ORETH, liquidity);
     }
 
     /* swap token and usdb */
@@ -96,7 +96,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(tokens[0],1 ether,1 ether);
 
         address[] memory path = new address[](2);
-        path[0] = RUSD9;
+        path[0] = ORUSD;
         path[1] = tokens[0];
 
         vm.startPrank(deployer);
@@ -113,7 +113,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         addLiquidityTokenAndUSDB(tokens[0],1 ether,1 ether);
 
         address[] memory path = new address[](2);
-        path[1] = RUSD9;
+        path[1] = ORUSD;
         path[0] = tokens[0];
 
         vm.startPrank(deployer);
@@ -127,15 +127,15 @@ contract RouterUSDBMOCK is BaseDeploy {
     }
 
     function test_swapExactETHForUSDB() public {
-        (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(RETH9,1 ether,1 ether);
+        (,,uint256 liquidity, )  = addLiquidityTokenAndUSDB(ORETH,1 ether,1 ether);
         addLiquidityTokenAndUSDB(tokens[0],1 ether,1 ether);
 
         address[] memory path = new address[](2);
-        path[1] = RUSD9;
-        path[0] = RETH9;
+        path[1] = ORUSD;
+        path[0] = ORETH;
 
         vm.startPrank(deployer);
-        IERC20(RETH9).approve(address(swapRouter), 5000);
+        IERC20(ORETH).approve(address(swapRouter), 5000);
         
         uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), block.timestamp + 100);
         vm.stopPrank();

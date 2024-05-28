@@ -7,15 +7,15 @@ import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
 
 import {TestERC20} from "./utils/TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IRUSD} from "./interfaces/IRUSD.sol";
-import {IRETH} from "./interfaces/IRETH.sol";
+import {IORUSD} from "./interfaces/IORUSD.sol";
+import {IORETH} from "./interfaces/IORETH.sol";
 import {IUSDB} from "./interfaces/IUSDB.sol";
 import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
 import {IOutswapV1Router} from "src/router/interfaces/IOutswapV1Router.sol";
 import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
 
-string constant RETHAtricle = "test/utils/RETH.json";
-string constant RUSDAtricle = "test/utils/RUSD.json";
+string constant ORETHAtricle = "test/utils/ORETH.json";
+string constant ORUSDAtricle = "test/utils/ORUSD.json";
 string constant factoryAtricle = "out/OutswapV1Factory.sol/OutswapV1Factory.json";
 string constant routerAtricle = "out/OutswapV1Router.sol/OutswapV1Router.json";
 
@@ -29,10 +29,10 @@ contract BaseDeploy is Test {
     IOutswapV1Factory public poolFactory = IOutswapV1Factory(OutswapV1Factory);
     IOutswapV1Router public swapRouter = IOutswapV1Router(OutswapV1Router);
 
-    address public RETH9 = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
-    IRETH public reth = IRETH(RETH9);
-    address public RUSD9 = 0x671540e1569b8E82605C3eEA5939d326C4Eda457;
-    IRUSD public rusd = IRUSD(RUSD9);
+    address public ORETH = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
+    IORETH public reth = IORETH(ORETH);
+    address public ORUSD = 0x671540e1569b8E82605C3eEA5939d326C4Eda457;
+    IORUSD public rusd = IORUSD(ORUSD);
     address public USDB = 0x4200000000000000000000000000000000000022;
     IUSDB public usdb = IUSDB(USDB);
 
@@ -50,8 +50,8 @@ contract BaseDeploy is Test {
 
         vm.label(OutswapV1Factory, "OutswapV1Factory");
         vm.label(OutswapV1Router, "OutswapV1Router");
-        vm.label(RETH9, "RETH9");
-        vm.label(RUSD9, "RUSD9");
+        vm.label(ORETH, "ORETH");
+        vm.label(ORUSD, "ORUSD");
         vm.label(USDB, "USDB");
         vm.label(ethVault, "ethVault");
         vm.label(usdVault, "usdVault");
@@ -62,10 +62,10 @@ contract BaseDeploy is Test {
         IUSDB(USDB).mint(deployer, 100 ether);
 
         vm.startPrank(deployer);
-        IRETH(RETH9).deposit{value: 20 ether}();
+        IORETH(ORETH).deposit{value: 20 ether}();
 
-        IERC20(USDB).approve(RUSD9, type(uint256).max);
-        IRUSD(RUSD9).deposit(10 ether);
+        IERC20(USDB).approve(ORUSD, type(uint256).max);
+        IORUSD(ORUSD).deposit(10 ether);
 
         getToken(tokenNum);
         vm.stopPrank();
@@ -79,19 +79,19 @@ contract BaseDeploy is Test {
     }
 
     function deployNewEnv() internal {
-        RETH9 = deployCode(RETHAtricle, abi.encode(deployer));
-        RUSD9 = deployCode(RUSDAtricle, abi.encode(deployer));
+        ORETH = deployCode(ORETHAtricle, abi.encode(deployer));
+        ORUSD = deployCode(ORUSDAtricle, abi.encode(deployer));
         USDB = address(new TestERC20(type(uint256).max / 2));
 
-        IRETH(payable(RETH9)).setOutETHVault(ethVault);
+        IORETH(payable(ORETH)).setOutETHVault(ethVault);
 
         vm.deal(deployer, 10e10 ether);
-        IRETH(payable(RETH9)).deposit{value: 100 ether}();
+        IORETH(payable(ORETH)).deposit{value: 100 ether}();
 
         address factory = deployCode(factoryAtricle, abi.encode(deployer));
         poolFactory = IOutswapV1Factory(factory);
 
-        address router = deployCode(routerAtricle, abi.encode(address(poolFactory), RETH9, RUSD9, USDB));
+        address router = deployCode(routerAtricle, abi.encode(address(poolFactory), ORETH, ORUSD, USDB));
         swapRouter = IOutswapV1Router(router);
     }
 
@@ -126,7 +126,7 @@ contract BaseDeploy is Test {
     }
 
     function addLiquidityTokenAndUSDB(address token, uint256 tokenAmount, uint256 usdbAmount, address recipet) internal virtual returns (uint256 amount0, uint256 amount1, uint256 liquidity, address pair) {
-        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, RUSD9);
+        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, ORUSD);
         pair = OutswapV1Library.pairFor(
             address(poolFactory),
             _token0,
@@ -136,7 +136,7 @@ contract BaseDeploy is Test {
         vm.startPrank(deployer);
 
         IERC20(USDB).approve(address(swapRouter), usdbAmount);
-        if(token != RETH9) {
+        if(token != ORETH) {
             IERC20(tokens[0]).approve(address(swapRouter), tokenAmount);
             (amount0, amount1, liquidity) = swapRouter.addLiquidityUSDB(
                 tokens[0],
@@ -164,11 +164,11 @@ contract BaseDeploy is Test {
 
     /* REMOVE LIQUIDITY */
     function removeLiquidityTokenAndUSDB(address token, uint256 amount, address recipet) internal virtual {
-        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, RUSD9);
+        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, ORUSD);
         address pair = OutswapV1Library.pairFor(address(poolFactory), _token0, _token1 );
 
         IERC20(pair).approve(address(swapRouter), amount);
-        if(token != RETH9) {
+        if(token != ORETH) {
             swapRouter.removeLiquidityUSDB(
                 tokens[0],
                 amount,

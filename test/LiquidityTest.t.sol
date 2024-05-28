@@ -72,7 +72,7 @@ contract liquidityTest is BaseDeploy {
 
         vm.startPrank(deployer);
 
-        (address tokenA, address tokenB) = (tokens[0], RETH9);
+        (address tokenA, address tokenB) = (tokens[0], ORETH);
         address pair = poolFactory.getPair(tokenA, tokenB);
         IERC20(pair).approve(address(swapRouter), type(uint256).max);
 
@@ -93,7 +93,7 @@ contract liquidityTest is BaseDeploy {
 
         vm.startPrank(deployer);
 
-        (address tokenA, address tokenB) = (tokens[0], RETH9);
+        (address tokenA, address tokenB) = (tokens[0], ORETH);
         address pair = poolFactory.getPair(tokenA, tokenB);
         IERC20(pair).approve(address(swapRouter), type(uint256).max);
 

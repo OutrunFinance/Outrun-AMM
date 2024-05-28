@@ -42,7 +42,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
         assertEq(accumFeePerLP, 0);
 
         tokenToUsdPath = new address[](2);
-        tokenToUsdPath = [tokens[0], RUSD9];
+        tokenToUsdPath = [tokens[0], ORUSD];
 
     }
 

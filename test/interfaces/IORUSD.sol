@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title RUSD interface
+ * @title ORUSD interface
  */
-interface IRUSD is IERC20 {
+interface IORUSD is IERC20 {
     error ZeroInput();
 
     error PermissionDenied();

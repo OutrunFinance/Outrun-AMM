@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title RETH interface
+ * @title ORETH interface
  */
-interface IRETH is IERC20 {
+interface IORETH is IERC20 {
     error ZeroInput();
 
     error PermissionDenied();

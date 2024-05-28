@@ -138,7 +138,7 @@ contract FlashMock is BaseDeploy {
 
         console2.log("Factory contracts created successfully.");
         address factory2 = deployCode(factoryAtricle, abi.encode(deployer, gasManager));
-        router2 = deployCode(routerAtricle, abi.encode(factory2, RETH9, RUSD9, USDB, gasManager));
+        router2 = deployCode(routerAtricle, abi.encode(factory2, ORETH, ORUSD, USDB, gasManager));
 
         (uint256 amountA1, uint256 amountB1, uint256 liquidity1) = addLiquidity(tokens[0], tokens[1], amount, amount); // token0 = token1
         console2.log("Creating liquidity pool1", amountA1, ":", amountB1);
