@@ -1,4 +1,4 @@
-**Read this in chinese: [中文](README.cn.md)**
+**Read this in Chinese: [中文](README.cn.md)**
 
 ## OutswapV1
 
