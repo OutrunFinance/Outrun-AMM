@@ -22,5 +22,8 @@ contract OutswapV1Script is BaseScript {
 
         console.log("OutswapV1Factory deployed on %s", address(factory));
         console.log("OutswapV1Router deployed on %s", address(router));
+
+        bytes32 initCodeHash = keccak256(abi.encodePacked(type(OutswapV1Pair).creationCode, abi.encode(gasManager)));
+        console.logBytes32(initCodeHash);
     }
 }
