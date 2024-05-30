@@ -24,4 +24,4 @@ We analyzed the historical trading data of UniswapV3 and identified the followin
   + New protocols lack substantial mainstream assets, making it difficult to accumulate Total Value Locked (TVL).
   + New assets on Uniswap V3 face liquidity fragmentation issues, as it is challenging to determine upper and lower bounds for price ranges, leading to higher impermanent loss for liquidity providers (LPs).
 
-Therefore, the initial version of Outswap -- OutswapV1, will be built based on the design principles of UniswapV2. We will only introduce the concentrated liquidity AMM version -- **OutswapV2**, after OutswapV1 has acquired sufficient liquidity.
+Therefore, the initial version of Outswap-- OutswapV1, will be built based on the design principles of UniswapV2. We will only introduce the concentrated liquidity AMM version -- **OutswapV2**, after OutswapV1 has acquired sufficient liquidity.
