@@ -23,4 +23,4 @@ OutswapV1 基于 UniswapV2 的设计理念构建，并针对 UniswapV2 进行了
    + 新协议缺乏大量的主流资产，使得积累总锁定价值（TVL）变得困难。
    + 新资产在 Uniswap V3 上面临流动性碎片化的问题，因为难以确定价格区间的上界和下界，导致流动性提供者（LP）面临更高的无常损失。
 
-所以 Outswap 的初始版本 OutswapV1 将会基于 UniswapV2 构建，在 OutswapV1 获得足够的流动性后我们才会推出集中流动性 AMM 版本 - **OutswapV2**.
+所以 Outswap 的初始版本--OutswapV1 将会基于 UniswapV2 的设计理念构建，在 OutswapV1 获得足够的流动性后我们才会推出集中流动性 AMM 版本 - **OutswapV2**.
