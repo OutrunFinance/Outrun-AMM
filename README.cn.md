@@ -1,11 +1,11 @@
 
-## OutswapV1
+## Outrun AMM
 
-OutswapV1 基于 UniswapV2 的设计理念构建，并针对 UniswapV2 进行了多项基于 Blast (Layer 2) 的本地化改进。具体来说，OutswapV1 引入了 orETH 和 orUSD 作为中间代币，并对做市手续费管理进行了重要改进。以下是其主要特点：
+Outrun AMM 基于 UniswapV2 的设计理念构建，并针对 UniswapV2 进行了多项基于 Blast (Layer 2) 的本地化改进。具体来说，Outrun AMM 引入了 orETH 和 orUSD 作为中间代币，并对做市手续费管理进行了重要改进。以下是其主要特点：
 
-+ **使用 orETH 和 orUSD 作为中间代币**：Outswap 引入了 orETH 和 orUSD 作为交易对中的中间代币。这种设计可以使得 Outstake 捕获到 Outswap 产生的原生收益，提高协议产生的收益。
++ **使用 orETH 和 orUSD 作为中间代币**：Outrun AMM 引入了 orETH 和 orUSD 作为交易对中的中间代币。这种设计可以使得 Outstake 捕获到 Outswap 产生的原生收益，提高协议产生的收益。
 
-+ **流动性与做市手续费分离**：OutswapV1 改进了做市手续费的管理方式，将流动性与做市手续费的获取分离，使得用户可以在不移除流动性的情况下单独领取手续费。这种改进为流动性提供者带来了更大的灵活性和便利性。
++ **流动性与做市手续费分离**：Outrun AMM 改进了做市手续费的管理方式，将流动性与做市手续费的获取分离，使得用户可以在不移除流动性的情况下单独领取手续费。这种改进为流动性提供者带来了更大的灵活性和便利性。
 
 ## 为什么基于 UniswapV2 构建而不是 Uniswap V3？
 
@@ -23,4 +23,4 @@ OutswapV1 基于 UniswapV2 的设计理念构建，并针对 UniswapV2 进行了
    + 新协议缺乏大量的主流资产，使得积累总锁定价值（TVL）变得困难。
    + 新资产在 Uniswap V3 上面临流动性碎片化的问题，因为难以确定价格区间的上界和下界，导致流动性提供者（LP）面临更高的无常损失。
 
-所以 Outswap 的初始版本--OutswapV1 将会基于 UniswapV2 的设计理念构建，在 OutswapV1 获得足够的流动性后我们才会推出集中流动性 AMM 版本 - **OutswapV2**.
+所以 Outswap 的初始版本--Outrun AMM 基于 UniswapV2 的设计理念构建，在 Outrun AMM 获得足够的流动性后我们才会推出集中流动性 AMM 版本 - **Outrun CLAMM**.
