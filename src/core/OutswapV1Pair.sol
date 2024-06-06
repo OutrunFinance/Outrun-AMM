@@ -32,7 +32,6 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
 
     uint256 public feeGrowthX128; // accumulate maker fee per LP X128
     uint256 public feeGrowthRecordPFX128; // record the feeGrowthX128 when claim protocol fee
-    uint256 public unClaimedProtocolFeeX128;
     mapping(address account => uint256) public feeGrowthRecordX128; // record the feeGrowthX128 when calc maker's append fee
     mapping(address account => uint256) public unClaimedFeesX128;
 
@@ -203,11 +202,6 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         unClaimedFeesX128[msgSender] = 0;
         _mint(address(this), unClaimedFee);
 
-        // claim protocol fee
-        uint256 unClaimedProtocolFee = unClaimedProtocolFeeX128 / FixedPoint128.Q128;
-        unClaimedProtocolFeeX128 = 0;
-        _mint(feeTo, unClaimedProtocolFee);
-
         // burn the fee of LP
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         address _token0 = token0;
@@ -304,7 +298,8 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
                 uint256 _feeGrowthRecordPFX128 = feeGrowthRecordPFX128;
                 uint256 feeAppendPFX128 = totalSupply * (_feeGrowthX128 - _feeGrowthRecordPFX128);
                 if (feeAppendPFX128 > 0) {
-                    unClaimedProtocolFeeX128 += feeAppendPFX128 / 4;
+                    uint256 unClaimedProtocolFee = (feeAppendPFX128 / 4) / FixedPoint128.Q128;
+                    _mint(feeTo, unClaimedProtocolFee);
                 }
 
                 feeGrowthRecordPFX128 = _feeGrowthX128;

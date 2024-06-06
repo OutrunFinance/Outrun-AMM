@@ -23,7 +23,6 @@ interface IOutswapV1Pair {
     function kLast() external view returns (uint256);
     function feeGrowthX128() external view returns (uint256);
     function feeGrowthRecordPFX128() external view returns (uint256);
-    function unClaimedProtocolFeeX128() external view returns (uint256);
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
     function viewUnClaimedFee() external view returns (uint256 amount0, uint256 amount1);
 
