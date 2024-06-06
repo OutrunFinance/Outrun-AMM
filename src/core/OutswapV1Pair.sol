@@ -296,9 +296,9 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
                 }
 
                 uint256 _feeGrowthRecordPFX128 = feeGrowthRecordPFX128;
-                uint256 feeAppendPFX128 = totalSupply * (_feeGrowthX128 - _feeGrowthRecordPFX128);
-                if (feeAppendPFX128 > 0) {
-                    uint256 unClaimedProtocolFee = (feeAppendPFX128 / 4) / FixedPoint128.Q128;
+                uint256 feeAppendTotalX128 = totalSupply * (_feeGrowthX128 - _feeGrowthRecordPFX128);
+                if (feeAppendTotalX128 > 0) {
+                    uint256 unClaimedProtocolFee = (feeAppendTotalX128 / 4) / FixedPoint128.Q128;
                     _mint(feeTo, unClaimedProtocolFee);
                 }
 
