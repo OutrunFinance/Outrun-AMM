@@ -196,7 +196,7 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
      */
     function claimMakerFee() external override returns (uint256 amount0, uint256 amount1) {
         address msgSender = msg.sender;
-        address feeTo = _calcFeeX128(msgSender);
+        _calcFeeX128(msgSender);
 
         uint256 unClaimedFee = unClaimedFeesX128[msgSender] / FixedPoint128.Q128;
         unClaimedFeesX128[msgSender] = 0;
@@ -298,11 +298,14 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
                 uint256 _feeGrowthRecordPFX128 = feeGrowthRecordPFX128;
                 uint256 feeAppendTotalX128 = totalSupply * (_feeGrowthX128 - _feeGrowthRecordPFX128);
                 if (feeAppendTotalX128 > 0) {
+                    unClaimedFeesX128[feeTo] += balanceOf(feeTo) * (_feeGrowthX128 - feeGrowthRecordX128[feeTo]);
+
                     uint256 unClaimedProtocolFee = (feeAppendTotalX128 / 4) / FixedPoint128.Q128;
                     _mint(feeTo, unClaimedProtocolFee);
                 }
 
                 feeGrowthRecordPFX128 = _feeGrowthX128;
+                feeGrowthRecordX128[feeTo] = _feeGrowthX128;
             }
         }
 
