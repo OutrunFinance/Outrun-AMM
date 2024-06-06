@@ -19,10 +19,10 @@ contract OutswapV1Factory is IOutswapV1Factory, Ownable, GasManagerable {
     }
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
-        require(tokenA != tokenB, "OutswapV1: IDENTICAL_ADDRESSES");
+        require(tokenA != tokenB, "Outrun AMM: IDENTICAL_ADDRESSES");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), "OutswapV1: ZERO_ADDRESS");
-        require(getPair[token0][token1] == address(0), "OutswapV1: PAIR_EXISTS"); // single check is sufficient
+        require(token0 != address(0), "Outrun AMM: ZERO_ADDRESS");
+        require(getPair[token0][token1] == address(0), "Outrun AMM: PAIR_EXISTS"); // single check is sufficient
         bytes32 _salt = keccak256(abi.encodePacked(token0, token1));
         pair = address(new OutswapV1Pair{salt: _salt}(gasManager()));
         IOutswapV1Pair(pair).initialize(token0, token1);
