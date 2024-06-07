@@ -13,6 +13,6 @@ gas_reports = ["*"]
 blast_sepolia = "${BLAST_TESTNET_RPC}"
 
 [etherscan]
-blast_sepolia = { key = "${ETHERSCAN_API_KEY}", chain = "168587773", url = "${BLAST_API_URL}" }
+blast_sepolia = { key = "${BLASTSCAN_API_KEY}", chain = "168587773", url = "${BLAST_API_URL}" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
