@@ -58,12 +58,8 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
      * @dev View unclaimed maker fee
      */
     function viewUnClaimedFee() external view override returns (uint256 amount0, uint256 amount1) {
-        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
-        uint256 _feeGrowthX128 = feeGrowthX128
-            + (Math.sqrt(uint256(_reserve0) * uint256(_reserve1)) - Math.sqrt(kLast)) * FixedPoint128.Q128 / totalSupply;
-
         address msgSender = msg.sender;
-        uint256 feeAppendX128 = balanceOf(msgSender) * (_feeGrowthX128 - feeGrowthRecordX128[msgSender]);
+        uint256 feeAppendX128 = balanceOf(msgSender) * (feeGrowthX128 - feeGrowthRecordX128[msgSender]);
         uint256 unClaimedFeeX128 = unClaimedFeesX128[msgSender];
         if (feeAppendX128 > 0) {
             unClaimedFeeX128 +=
@@ -71,8 +67,8 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         }
 
         uint256 _totalSupply = totalSupply;
-        amount0 = (unClaimedFeeX128 * _reserve0 / _totalSupply) / FixedPoint128.Q128;
-        amount1 = (unClaimedFeeX128 * _reserve1 / _totalSupply) / FixedPoint128.Q128;
+        amount0 = (unClaimedFeeX128 * reserve0 / _totalSupply) / FixedPoint128.Q128;
+        amount1 = (unClaimedFeeX128 * reserve1 / _totalSupply) / FixedPoint128.Q128;
     }
 
     // called once by the factory at time of deployment
@@ -198,7 +194,9 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         address msgSender = msg.sender;
         _calcFeeX128(msgSender);
 
-        uint256 unClaimedFee = unClaimedFeesX128[msgSender] / FixedPoint128.Q128;
+        uint256 feeX128 = unClaimedFeesX128[msgSender];
+        require(feeX128 > 0, "Outrun AMM: INSUFFICIENT_UNCLAIMED_FEE");
+        uint256 unClaimedFee = feeX128 / FixedPoint128.Q128;
         unClaimedFeesX128[msgSender] = 0;
         _mint(address(this), unClaimedFee);
 
@@ -291,21 +289,18 @@ contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
                     unClaimedFeesX128[to] += feeAppendX128;
                 }
             } else {
-                if (feeAppendX128 > 0) {
-                    unClaimedFeesX128[to] += feeAppendX128 * 3 / 4;
-                }
-
                 uint256 _feeGrowthRecordPFX128 = feeGrowthRecordPFX128;
                 uint256 feeAppendTotalX128 = totalSupply * (_feeGrowthX128 - _feeGrowthRecordPFX128);
                 if (feeAppendTotalX128 > 0) {
-                    unClaimedFeesX128[feeTo] += balanceOf(feeTo) * (_feeGrowthX128 - feeGrowthRecordX128[feeTo]);
-
                     uint256 unClaimedProtocolFee = (feeAppendTotalX128 / 4) / FixedPoint128.Q128;
                     _mint(feeTo, unClaimedProtocolFee);
                 }
 
+                if (feeAppendX128 > 0) {
+                    unClaimedFeesX128[to] += feeAppendX128 * 3 / 4;
+                }
+
                 feeGrowthRecordPFX128 = _feeGrowthX128;
-                feeGrowthRecordX128[feeTo] = _feeGrowthX128;
             }
         }
 
