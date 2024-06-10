@@ -28,9 +28,7 @@ contract OutswapV1Router is IOutswapV1Router, GasManagerable {
         ORETH = _orETH;
         ORUSD = _orUSD;
         USDB = _usdb;
-        IERC20(_orETH).approve(_orETH, type(uint256).max);
         IERC20(_usdb).approve(_orUSD, type(uint256).max);
-        IERC20(_orUSD).approve(_orUSD, type(uint256).max);
     }
 
     receive() external payable {}
