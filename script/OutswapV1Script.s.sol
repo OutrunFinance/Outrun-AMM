@@ -3,8 +3,10 @@ pragma solidity ^0.8.24;
 
 import "./BaseScript.s.sol";
 import "../src/core/OutswapV1ERC20.sol";
-import "../src/core/OutswapV1Pair.sol";
-import "../src/core/OutswapV1Factory.sol";
+import "../src/core/OutswapV1Pair0.sol";
+import "../src/core/OutswapV1Pair1.sol";
+import "../src/core/OutswapV1Factory0.sol";
+import "../src/core/OutswapV1Factory1.sol";
 import "../src/router/OutswapV1Router.sol";
 
 contract OutswapV1Script is BaseScript {
@@ -15,7 +17,8 @@ contract OutswapV1Script is BaseScript {
     address internal feeTo;
     address internal gasManager;
 
-    OutswapV1Factory internal factory;
+    OutswapV1Factory0 internal factory0;
+    OutswapV1Factory1 internal factory1;
 
     function run() public broadcaster {
         orETH = vm.envAddress("ORETH");
@@ -25,18 +28,20 @@ contract OutswapV1Script is BaseScript {
         feeTo = vm.envAddress("FEE_TO");
         gasManager = vm.envAddress("GAS_MANAGER");
         
-        bytes32 initCodeHash = keccak256(abi.encodePacked(type(OutswapV1Pair).creationCode, abi.encode(gasManager)));
-        console.logBytes32(initCodeHash);
+        console.log("0.3% Fee Pair initcode:");
+        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair0).creationCode, abi.encode(gasManager))));
 
-        //deployFactory();
-        deployRouter(0x583758BBD5B5fAF2983Be70B8E551829E1fbCc91);
-    }
+        console.log("1% Fee Pair initcode:");
+        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair1).creationCode, abi.encode(gasManager))));
 
-    function deployFactory() internal {
-        factory = new OutswapV1Factory(owner, gasManager);
-        factory.setFeeTo(feeTo);
+        factory0 = new OutswapV1Factory0(owner, gasManager);
+        factory0.setFeeTo(feeTo);
+        console.log("OutswapV1Factory0 deployed on %s", address(factory0));
 
-        console.log("OutswapV1Factory deployed on %s", address(factory));
+        factory1 = new OutswapV1Factory1(owner, gasManager);
+        factory1.setFeeTo(feeTo);
+        console.log("OutswapV1Factory1 deployed on %s", address(factory1));
+
     }
 
     function deployRouter(address factoryAddr) internal {
