@@ -12,7 +12,10 @@ import "../libraries/UQ112x112.sol";
 import "../libraries/FixedPoint128.sol";
 import "../blast/GasManagerable.sol";
 
-contract OutswapV1Pair is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
+/**
+ * @title OutswapV1Pair - Pair fee 0.3%
+ */
+contract OutswapV1Pair0 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     using UQ112x112 for uint224;
 
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
