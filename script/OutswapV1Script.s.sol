@@ -38,9 +38,10 @@ contract OutswapV1Script is BaseScript {
         factory0.setFeeTo(feeTo);
         console.log("OutswapV1Factory0 deployed on %s", address(factory0));
 
-        factory1 = new OutswapV1Factory1(owner, gasManager);
-        factory1.setFeeTo(feeTo);
-        console.log("OutswapV1Factory1 deployed on %s", address(factory1));
+        // The initCode for the OutswapV1Library needs to be modified first.
+        // factory1 = new OutswapV1Factory1(owner, gasManager);
+        // factory1.setFeeTo(feeTo);
+        // console.log("OutswapV1Factory1 deployed on %s", address(factory1));
 
     }
 
