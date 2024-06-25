@@ -33,7 +33,7 @@ abstract contract GasManagerable {
         _;
     }
 
-    function gasManager() public view virtual returns (address) {
+    function gasManager() public view returns (address) {
         return _gasManager;
     }
 
@@ -54,14 +54,14 @@ abstract contract GasManagerable {
         emit ClaimMaxGas(recipient, gasAmount);
     }
 
-    function transferGasManager(address newGasManager) public virtual onlyGasManager {
+    function transferGasManager(address newGasManager) public onlyGasManager {
         if (newGasManager == address(0)) {
             revert InvalidGasManager(address(0));
         }
         _transferGasManager(newGasManager);
     }
 
-    function _transferGasManager(address newGasManager) internal virtual {
+    function _transferGasManager(address newGasManager) internal {
         address oldGasManager = _gasManager;
         _gasManager = newGasManager;
         emit GasManagerTransferred(oldGasManager, newGasManager);
