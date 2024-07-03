@@ -3,7 +3,10 @@ pragma solidity ^0.8.24;
 
 import "../core/interfaces/IOutswapV1Pair.sol";
 
-library OutswapV1Library {
+/**
+ * 1% swap fee
+ */
+library OutswapV1Library02 {
     // returns sorted token addresses, used to handle return values from pairs sorted in this order
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
         require(tokenA != tokenB, "OutswapV1Library: IDENTICAL_ADDRESSES");
@@ -23,8 +26,7 @@ library OutswapV1Library {
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
                             /* bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(OutswapV1Pair).creationCode, abi.encode(gasManager))); */
-                            //hex"9d7b24376800c0a5fb253d12673d2021f71732f524fe808d89000739fc93fce8" // 0.3% init code hash
-                            hex"802f983959f1b1698f322fe5e22ff2370bce6656e002619a04cd1dd4f99f2048" // 1% init code hash
+                            hex"9d7b24376800c0a5fb253d12673d2021f71732f524fe808d89000739fc93fce8" // 1% init code hash
                         )
                     )
                 )
@@ -58,7 +60,7 @@ library OutswapV1Library {
     {
         require(amountIn > 0, "OutswapV1Library: INSUFFICIENT_INPUT_AMOUNT");
         require(reserveIn > 0 && reserveOut > 0, "OutswapV1Library: INSUFFICIENT_LIQUIDITY");
-        uint256 amountInWithFee = amountIn * 997;
+        uint256 amountInWithFee = amountIn * 990;
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
         amountOut = numerator / denominator;
@@ -73,7 +75,7 @@ library OutswapV1Library {
         require(amountOut > 0, "OutswapV1Library: INSUFFICIENT_OUTPUT_AMOUNT");
         require(reserveIn > 0 && reserveOut > 0, "OutswapV1Library: INSUFFICIENT_LIQUIDITY");
         uint256 numerator = reserveIn * amountOut * 1000;
-        uint256 denominator = (reserveOut - amountOut) * 997;
+        uint256 denominator = (reserveOut - amountOut) * 990;
         amountIn = (numerator / denominator) + 1;
     }
 
