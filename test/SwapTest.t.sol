@@ -28,7 +28,7 @@ contract SwapTest is Test {
         path = new address[](2);
         path[0] = orETH;
         path[1] = orUSD;
-        uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 10000000000000}(0x193529efd49863c, path, 0xcae21365145C467F8957607aE364fb29Ee073209, 0x66671c08);
+        uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 10000000000000}(0x193529efd49863c, path, 0xcae21365145C467F8957607aE364fb29Ee073209, address(0), 0x66671c08);
         console2.log("Swap ETH to USDB:", amounts[0], "-", amounts[1]);
         vm.stopBroadcast();
     }

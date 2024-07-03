@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 pragma abicoder v2;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
+import {OutswapV1Library01} from 'src/libraries/OutswapV1Library01.sol';
 
 import {TestERC20} from "./utils/TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -126,8 +126,8 @@ contract BaseDeploy is Test {
     }
 
     function addLiquidityTokenAndUSDB(address token, uint256 tokenAmount, uint256 usdbAmount, address recipet) internal virtual returns (uint256 amount0, uint256 amount1, uint256 liquidity, address pair) {
-        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, ORUSD);
-        pair = OutswapV1Library.pairFor(
+        (address _token0, address _token1) = OutswapV1Library01.sortTokens(token, ORUSD);
+        pair = OutswapV1Library01.pairFor(
             address(poolFactory),
             _token0,
             _token1
@@ -164,8 +164,8 @@ contract BaseDeploy is Test {
 
     /* REMOVE LIQUIDITY */
     function removeLiquidityTokenAndUSDB(address token, uint256 amount, address recipet) internal virtual {
-        (address _token0, address _token1) = OutswapV1Library.sortTokens(token, ORUSD);
-        address pair = OutswapV1Library.pairFor(address(poolFactory), _token0, _token1 );
+        (address _token0, address _token1) = OutswapV1Library01.sortTokens(token, ORUSD);
+        address pair = OutswapV1Library01.pairFor(address(poolFactory), _token0, _token1 );
 
         IERC20(pair).approve(address(swapRouter), amount);
         if(token != ORETH) {

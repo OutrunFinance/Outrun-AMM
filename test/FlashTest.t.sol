@@ -5,7 +5,7 @@ pragma abicoder v2;
 import {BaseDeploy, factoryAtricle, routerAtricle} from "./BaseDeploy.t.sol";
 import {console2} from "forge-std/console2.sol";
 
-import "src/libraries/OutswapV1Library.sol";
+import "src/libraries/OutswapV1Library01.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
@@ -62,6 +62,7 @@ contract SimpleFlash is IOutswapV1Callee {
             amount0Out,
             amount1Out,
             address(this),
+            address(this),
             abi.encode(msg.sender, path, tokenBorrow, tokenRevenue, router1, router2, borrowAmount)
         );
     }
@@ -96,16 +97,16 @@ contract SimpleFlash is IOutswapV1Callee {
 
         // swap the amount of tokenRevenue for 100 tokenBorrow 
         uint256[] memory amounts = new uint256[](2);
-        amounts = OutswapV1Library.getAmountsOut(IOutswapV1Router(router2).factory(), borrowAmount, swapPath);
+        amounts = OutswapV1Library01.getAmountsOut(IOutswapV1Router(router2).factory(), borrowAmount, swapPath);
         console2.log("amounts[0]", amounts[0], "amounts[1]", amounts[1]);
 
 
         IERC20(tokenBorrow).approve(router2, type(uint256).max);
-        IOutswapV1Router(router2).swapExactTokensForTokens(borrowAmount, 0, swapPath, address(this), block.timestamp);
+        IOutswapV1Router(router2).swapExactTokensForTokens(borrowAmount, 0, swapPath, address(this), address(0), block.timestamp);
 
         // 还t1
         (swapPath[0], swapPath[1]) = (tokenRevenue, tokenBorrow);
-        amounts = OutswapV1Library.getAmountsIn(IOutswapV1Router(router1).factory(), borrowAmount, swapPath);
+        amounts = OutswapV1Library01.getAmountsIn(IOutswapV1Router(router1).factory(), borrowAmount, swapPath);
         IERC20(tokenRevenue).transfer(pair1, amounts[0]);
 
         emit Repay(tokenRevenue, amounts[0]);

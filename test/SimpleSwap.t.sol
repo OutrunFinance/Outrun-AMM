@@ -64,18 +64,18 @@ contract SimpleSwap is BaseDeploy {
             path = new address[](2);
             path[0] = ORETH;
             path[1] = tokenOut;
-            amounts = swapRouter.swapExactETHForTokens{value: amountIn}(amountOutMin, path, from, deadline);
+            amounts = swapRouter.swapExactETHForTokens{value: amountIn}(amountOutMin, path, from, address(0), deadline);
         } else if (tokenOut == ORETH) {
             path = new address[](2);
             path[0] = tokenIn;
             path[1] = ORETH;
-            amounts = swapRouter.swapExactTokensForETH(amountIn, amountOutMin, path, from, deadline);
+            amounts = swapRouter.swapExactTokensForETH(amountIn, amountOutMin, path, from, address(0), deadline);
         } else {
             path = new address[](3);
             path[0] = tokenIn;
             path[1] = ORETH;
             path[2] = tokenOut;
-            amounts = swapRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, from, deadline);
+            amounts = swapRouter.swapExactTokensForTokens(amountIn, amountOutMin, path, from, address(0), deadline);
         }
         return amounts;
     }
