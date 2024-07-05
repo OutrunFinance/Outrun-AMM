@@ -101,7 +101,7 @@ contract RouterUSDBMOCK is BaseDeploy {
 
         vm.startPrank(deployer);
         IERC20(USDB).approve(address(swapRouter), 5000);
-        uint256[] memory amounts = swapRouter.swapExactUSDBForTokens(5000, 4000, path, address(this), address(0), block.timestamp + 100);
+        uint256[] memory amounts = swapRouter.swapExactUSDBForTokens(5000, 4000, path, address(this), block.timestamp + 100);
         vm.stopPrank();
 
         uint256[] memory amountsCal = OutswapV1Library01.getAmountsOut(OutswapV1Factory, 5000, path);
@@ -119,7 +119,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         vm.startPrank(deployer);
         IERC20(tokens[0]).approve(address(swapRouter), 5000);
         
-        uint256[] memory amounts = swapRouter.swapTokensForExactUSDB(4000, 4500, path, address(this), address(0), block.timestamp + 100);
+        uint256[] memory amounts = swapRouter.swapTokensForExactUSDB(4000, 4500, path, address(this), block.timestamp + 100);
         vm.stopPrank();
 
         uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, 4000, path);
@@ -137,7 +137,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         vm.startPrank(deployer);
         IERC20(ORETH).approve(address(swapRouter), 5000);
         
-        uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), address(0), block.timestamp + 100);
+        uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), block.timestamp + 100);
         vm.stopPrank();
 
         uint256[] memory amountsCal = OutswapV1Library01.getAmountsOut(OutswapV1Factory, 4500, path);

@@ -121,7 +121,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
 
         vm.startPrank(deployer);
         IERC20(tokenToUsdPath[0]).approve(address(swapRouter), amountIn);
-        swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), address(0), block.timestamp);
+        swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), block.timestamp);
         vm.stopPrank();
 
         accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
@@ -138,7 +138,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
         for (int i = 0; i < 10; i++){
             kLast = IOutswapV1Pair(tokenPair).kLast();
             IERC20(tokenToUsdPath[0]).approve(address(swapRouter), amountIn);
-            swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), address(0), block.timestamp);
+            swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), block.timestamp);
             accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
         }
         vm.stopPrank();

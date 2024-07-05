@@ -102,7 +102,7 @@ contract SimpleFlash is IOutswapV1Callee {
 
 
         IERC20(tokenBorrow).approve(router2, type(uint256).max);
-        IOutswapV1Router(router2).swapExactTokensForTokens(borrowAmount, 0, swapPath, address(this), address(0), block.timestamp);
+        IOutswapV1Router(router2).swapExactTokensForTokens(borrowAmount, 0, swapPath, address(this), block.timestamp);
 
         // 还t1
         (swapPath[0], swapPath[1]) = (tokenRevenue, tokenBorrow);
