@@ -12,6 +12,13 @@ interface IOutswapV1Pair {
         uint256 amount1Out,
         address indexed to
     );
+    event SwapFee(
+        address indexed referrer,
+        uint256 rebateFee0,
+        uint256 rebateFee1,
+        uint256 protocolFee0,
+        uint256 protocolFee1
+    );
     event Sync(uint112 reserve0, uint112 reserve1);
 
     function MINIMUM_LIQUIDITY() external pure returns (uint256);
@@ -22,13 +29,12 @@ interface IOutswapV1Pair {
     function price1CumulativeLast() external view returns (uint256);
     function kLast() external view returns (uint256);
     function feeGrowthX128() external view returns (uint256);
-    function feeGrowthRecordPFX128() external view returns (uint256);
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
     function viewUnClaimedFee() external view returns (uint256 amount0, uint256 amount1);
 
     function mint(address to) external returns (uint256 liquidity);
     function burn(address to) external returns (uint256 amount0, uint256 amount1);
-    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, address referrer, bytes calldata data) external;
     function skim(address to) external;
     function sync() external;
 

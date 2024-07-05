@@ -191,6 +191,7 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -199,19 +200,24 @@ interface IOutswapV1Router {
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
-        external
-        payable
-        returns (uint256[] memory amounts);
+    function swapExactETHForTokens(
+        uint256 amountOutMin, 
+        address[] calldata path, 
+        address to, 
+        address referrer, 
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
 
     function swapTokensForExactETH(
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -220,19 +226,24 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
-        external
-        payable
-        returns (uint256[] memory amounts);
+    function swapETHForExactTokens(
+        uint256 amountOut, 
+        address[] calldata path, 
+        address to, 
+        address referrer,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
 
     function swapExactUSDBForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -241,6 +252,7 @@ interface IOutswapV1Router {
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -249,6 +261,7 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -257,22 +270,27 @@ interface IOutswapV1Router {
         uint256 amountOut,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
     /**
      * SWAP with Pair(ETH, USDB) *
      */
-    function swapExactETHForUSDB(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
-        external
-        payable
-        returns (uint256[] memory amounts);
+    function swapExactETHForUSDB(
+        uint256 amountOutMin, 
+        address[] calldata path, 
+        address to, 
+        address referrer,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
 
     function swapUSDBForExactETH(
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -281,19 +299,24 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapETHForExactUSDB(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
-        external
-        payable
-        returns (uint256[] memory amounts);
+    function swapETHForExactUSDB(
+        uint256 amountOut, 
+        address[] calldata path, 
+        address to, 
+        address referrer,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external;
 
@@ -301,6 +324,7 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external payable;
 
@@ -309,6 +333,7 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external;
 
@@ -317,6 +342,7 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external;
 
@@ -325,6 +351,7 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external;
 

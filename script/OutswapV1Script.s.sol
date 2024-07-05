@@ -3,11 +3,12 @@ pragma solidity ^0.8.24;
 
 import "./BaseScript.s.sol";
 import "../src/core/OutswapV1ERC20.sol";
-import "../src/core/OutswapV1Pair0.sol";
-import "../src/core/OutswapV1Pair1.sol";
-import "../src/core/OutswapV1Factory0.sol";
-import "../src/core/OutswapV1Factory1.sol";
-import "../src/router/OutswapV1Router.sol";
+import "../src/core/OutswapV1Pair01.sol";
+import "../src/core/OutswapV1Pair02.sol";
+import "../src/core/OutswapV1Factory01.sol";
+import "../src/core/OutswapV1Factory02.sol";
+import "../src/router/OutswapV1Router01.sol";
+import "../src/router/OutswapV1Router02.sol";
 import "../src/router/OutrunMulticall.sol";
 
 contract OutswapV1Script is BaseScript {
@@ -18,8 +19,8 @@ contract OutswapV1Script is BaseScript {
     address internal feeTo;
     address internal gasManager;
 
-    OutswapV1Factory0 internal factory0;
-    OutswapV1Factory1 internal factory1;
+    OutswapV1Factory01 internal factory0;
+    OutswapV1Factory02 internal factory1;
 
     function run() public broadcaster {
         orETH = vm.envAddress("ORETH");
@@ -30,10 +31,10 @@ contract OutswapV1Script is BaseScript {
         gasManager = vm.envAddress("GAS_MANAGER");
         
         console.log("0.3% Fee Pair initcode:");
-        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair0).creationCode, abi.encode(gasManager))));
+        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair01).creationCode, abi.encode(gasManager))));
 
         console.log("1% Fee Pair initcode:");
-        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair1).creationCode, abi.encode(gasManager))));
+        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
 
         // factory0 = new OutswapV1Factory0(owner, gasManager);
         // factory0.setFeeTo(feeTo);
@@ -56,6 +57,6 @@ contract OutswapV1Script is BaseScript {
     }
 
     function deployRouter(address factoryAddr) internal returns (address routerAddr) {
-        routerAddr = address(new OutswapV1Router(factoryAddr, orETH, orUSD, USDB, gasManager));
+        routerAddr = address(new OutswapV1Router01(factoryAddr, orETH, orUSD, USDB, gasManager));
     }
 }

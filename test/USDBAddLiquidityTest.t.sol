@@ -2,15 +2,15 @@
 pragma solidity ^0.8.24;
 pragma abicoder v2;
 
-import {BaseDeploy} from "./BaseDeploy.t.sol";
-import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {BaseDeploy} from "./BaseDeploy.t.sol";
+import {OutswapV1Library01} from 'src/libraries/OutswapV1Library01.sol';
 import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
 
 contract RouterUSDBMOCK is BaseDeploy {
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
 
-    fallback() external payable {}
+    receive() external payable {}
 
     /* add liquidity */
     function test_addLiquidityUSDB() public {
@@ -101,10 +101,10 @@ contract RouterUSDBMOCK is BaseDeploy {
 
         vm.startPrank(deployer);
         IERC20(USDB).approve(address(swapRouter), 5000);
-        uint256[] memory amounts = swapRouter.swapExactUSDBForTokens(5000, 4000, path, address(this), block.timestamp + 100);
+        uint256[] memory amounts = swapRouter.swapExactUSDBForTokens(5000, 4000, path, address(this), address(0), block.timestamp + 100);
         vm.stopPrank();
 
-        uint256[] memory amountsCal = OutswapV1Library.getAmountsOut(OutswapV1Factory, 5000, path);
+        uint256[] memory amountsCal = OutswapV1Library01.getAmountsOut(OutswapV1Factory, 5000, path);
         assertEq(amounts[0], amountsCal[0]);
     }
 
@@ -119,10 +119,10 @@ contract RouterUSDBMOCK is BaseDeploy {
         vm.startPrank(deployer);
         IERC20(tokens[0]).approve(address(swapRouter), 5000);
         
-        uint256[] memory amounts = swapRouter.swapTokensForExactUSDB(4000, 4500, path, address(this), block.timestamp + 100);
+        uint256[] memory amounts = swapRouter.swapTokensForExactUSDB(4000, 4500, path, address(this), address(0), block.timestamp + 100);
         vm.stopPrank();
 
-        uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, 4000, path);
+        uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, 4000, path);
         assertEq(amounts[0], amountsCal[0]);
     }
 
@@ -137,10 +137,10 @@ contract RouterUSDBMOCK is BaseDeploy {
         vm.startPrank(deployer);
         IERC20(ORETH).approve(address(swapRouter), 5000);
         
-        uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), block.timestamp + 100);
+        uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), address(0), block.timestamp + 100);
         vm.stopPrank();
 
-        uint256[] memory amountsCal = OutswapV1Library.getAmountsOut(OutswapV1Factory, 4500, path);
+        uint256[] memory amountsCal = OutswapV1Library01.getAmountsOut(OutswapV1Factory, 4500, path);
         assertEq(amounts[0], amountsCal[0]);
     }
 

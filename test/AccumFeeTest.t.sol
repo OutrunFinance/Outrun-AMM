@@ -5,7 +5,7 @@ pragma abicoder v2;
 import {BaseDeploy} from "./BaseDeploy.t.sol";
 import {console2} from "forge-std/Test.sol";
 
-import {OutswapV1Library} from 'src/libraries/OutswapV1Library.sol';
+import {OutswapV1Library01} from 'src/libraries/OutswapV1Library01.sol';
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -52,9 +52,9 @@ contract ACCUMFEEMOCK is BaseDeploy {
         uint256 totoalAmount = totalSupply + 1 ether;
 
         vm.startPrank(deployer);
-        uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, totoalAmount, tokenToUsdPath);
+        uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, totoalAmount, tokenToUsdPath);
         IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-        IOutswapV1Pair(tokenPair).swap(0, totoalAmount, address(this), "");
+        IOutswapV1Pair(tokenPair).swap(0, totoalAmount, address(this), address(this), "");
         vm.stopPrank();
 
         (reserve0, reserve1, ) = IOutswapV1Pair(tokenPair).getReserves();
@@ -73,9 +73,9 @@ contract ACCUMFEEMOCK is BaseDeploy {
         vm.startPrank(deployer);
         
         for (int i = 0; i < 10; i++){
-            uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
+            uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
             IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-            IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), "");
+            IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), address(this), "");
 
             accumFeePerLP = IAccumFeePerLP(tokenPair).accumFeePerLP();
             assertEq(accumFeePerLP, 0);
@@ -91,9 +91,9 @@ contract ACCUMFEEMOCK is BaseDeploy {
         vm.assume(amountOut > 0 && amountOut < 7.5 ether); // < 7.5 防止溢出
 
         vm.startPrank(deployer);
-        uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
+        uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
         IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-        IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), "");
+        IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), address(this), "");
         vm.stopPrank();
 
         accumFeePerLP = IAccumFeePerLP(tokenPair).accumFeePerLP();
@@ -105,9 +105,9 @@ contract ACCUMFEEMOCK is BaseDeploy {
         uint256 amountOut = totalSupply;
 
         vm.startPrank(deployer);
-        uint256[] memory amountsCal = OutswapV1Library.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
+        uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
         IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-        IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), "");
+        IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), address(this), "");
         vm.stopPrank();
 
         accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
@@ -121,7 +121,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
 
         vm.startPrank(deployer);
         IERC20(tokenToUsdPath[0]).approve(address(swapRouter), amountIn);
-        swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), block.timestamp);
+        swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), address(0), block.timestamp);
         vm.stopPrank();
 
         accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
@@ -138,7 +138,7 @@ contract ACCUMFEEMOCK is BaseDeploy {
         for (int i = 0; i < 10; i++){
             kLast = IOutswapV1Pair(tokenPair).kLast();
             IERC20(tokenToUsdPath[0]).approve(address(swapRouter), amountIn);
-            swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), block.timestamp);
+            swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), address(0), block.timestamp);
             accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
         }
         vm.stopPrank();
