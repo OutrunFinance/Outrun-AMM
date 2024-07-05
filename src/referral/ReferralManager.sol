@@ -13,7 +13,7 @@ contract ReferralManager is IReferralManager, Ownable, GasManagerable {
     mapping(address router => bool) private _authenticator;
     mapping(address account => address) private _referrers;
 
-    constructor(address _owner, address _gasManager) Ownable(_owner) GasManagerable(_gasManager) {
+    constructor(address _registrar, address _gasManager) Ownable(_registrar) GasManagerable(_gasManager) {
     }
 
     function queryReferrer(address account) external view override returns (address) {

@@ -19,6 +19,7 @@ contract OutswapV1Script is BaseScript {
     address internal owner;
     address internal feeTo;
     address internal gasManager;
+    address internal registrar;
     address internal referralManager;
 
     OutswapV1Factory01 internal factory0;
@@ -31,6 +32,7 @@ contract OutswapV1Script is BaseScript {
         owner = vm.envAddress("OWNER");
         feeTo = vm.envAddress("FEE_TO");
         gasManager = vm.envAddress("GAS_MANAGER");
+        registrar = vm.envAddress("REGISTRAR");
         
         console.log("0.3% Fee Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair01).creationCode, abi.encode(gasManager))));
@@ -38,7 +40,7 @@ contract OutswapV1Script is BaseScript {
         console.log("1% Fee Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
 
-        referralManager = address(new ReferralManager(owner, gasManager));
+        referralManager = address(new ReferralManager(registrar, gasManager));
         console.log("ReferralManager deployed on %s", referralManager);
         // factory0 = new OutswapV1Factory0(owner, gasManager);
         // factory0.setFeeTo(feeTo);
