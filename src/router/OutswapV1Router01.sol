@@ -89,16 +89,8 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    )
-        external
-        payable
-        virtual
-        override
-        ensure(deadline)
-        returns (uint256 amountToken, uint256 amountETH, uint256 liquidity)
-    {
-        (amountToken, amountETH) =
-            _addLiquidity(token, ORETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
+    ) external payable virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH, uint256 liquidity) {
+        (amountToken, amountETH) = _addLiquidity(token, ORETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
         address pair = OutswapV1Library01.pairFor(factory, token, ORETH);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         IORETH(ORETH).deposit{value: amountETH}();
@@ -116,17 +108,8 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
         uint256 amountUSDBMin,
         address to,
         uint256 deadline
-    )
-        external
-        payable
-        virtual
-        override
-        ensure(deadline)
-        returns (uint256 amountToken, uint256 amountUSDB, uint256 liquidity)
-    {
-        (amountToken, amountUSDB) =
-            _addLiquidity(token, ORUSD, amountTokenDesired, amountUSDBDesired, amountTokenMin, amountUSDBMin);
-
+    ) external payable virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountUSDB, uint256 liquidity) {
+        (amountToken, amountUSDB) = _addLiquidity(token, ORUSD, amountTokenDesired, amountUSDBDesired, amountTokenMin, amountUSDBMin);
         address pair = OutswapV1Library01.pairFor(factory, token, ORUSD);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amountUSDB);
@@ -141,16 +124,8 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
         uint256 amountUSDBMin,
         address to,
         uint256 deadline
-    )
-        external
-        payable
-        virtual
-        override
-        ensure(deadline)
-        returns (uint256 amountETH, uint256 amountUSDB, uint256 liquidity)
-    {
+    ) external payable virtual override ensure(deadline) returns (uint256 amountETH, uint256 amountUSDB, uint256 liquidity) {
         (amountETH, amountUSDB) = _addLiquidity(ORETH, ORUSD, msg.value, amountUSDBDesired, amountETHMin, amountUSDBMin);
-
         address pair = OutswapV1Library01.pairFor(factory, ORETH, ORUSD);
         IORETH(ORETH).deposit{value: amountETH}();
         assert(IORETH(ORETH).transfer(pair, amountETH));
@@ -189,8 +164,7 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
-        (amountToken, amountETH) =
-            removeLiquidity(token, ORETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
+        (amountToken, amountETH) = removeLiquidity(token, ORETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
         TransferHelper.safeTransfer(token, to, amountToken);
         IORETH(ORETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
@@ -204,8 +178,7 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountUSDB) {
-        (amountToken, amountUSDB) =
-            removeLiquidity(token, ORUSD, liquidity, amountTokenMin, amountUSDBMin, address(this), deadline);
+        (amountToken, amountUSDB) = removeLiquidity(token, ORUSD, liquidity, amountTokenMin, amountUSDBMin, address(this), deadline);
         TransferHelper.safeTransfer(token, to, amountToken);
         IORUSD(ORUSD).withdraw(amountUSDB);
         TransferHelper.safeTransfer(USDB, to, amountUSDB);
@@ -218,8 +191,7 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountETH, uint256 amountUSDB) {
-        (amountETH, amountUSDB) =
-            removeLiquidity(ORETH, ORUSD, liquidity, amountETHMin, amountUSDBMin, address(this), deadline);
+        (amountETH, amountUSDB) = removeLiquidity(ORETH, ORUSD, liquidity, amountETHMin, amountUSDBMin, address(this), deadline);
         IORETH(ORETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
         IORUSD(ORUSD).withdraw(amountUSDB);
@@ -760,53 +732,41 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
     }
 
     // **** LIBRARY FUNCTIONS ****
-    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB)
-        public
-        pure
-        virtual
-        override
-        returns (uint256 amountB)
-    {
+    function quote(
+        uint256 amountA, 
+        uint256 reserveA, 
+        uint256 reserveB
+    ) public pure virtual override returns (uint256 amountB) {
         return OutswapV1Library01.quote(amountA, reserveA, reserveB);
     }
 
-    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
-        public
-        pure
-        virtual
-        override
-        returns (uint256 amountOut)
-    {
+    function getAmountOut(
+        uint256 amountIn, 
+        uint256 reserveIn, 
+        uint256 reserveOut
+    ) public pure virtual override returns (uint256 amountOut) {
         return OutswapV1Library01.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
-    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
-        public
-        pure
-        virtual
-        override
-        returns (uint256 amountIn)
-    {
+    function getAmountIn(
+        uint256 amountOut, 
+        uint256 reserveIn, 
+        uint256 reserveOut
+    ) public pure virtual override returns (uint256 amountIn) {
         return OutswapV1Library01.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
-    function getAmountsOut(uint256 amountIn, address[] memory path)
-        public
-        view
-        virtual
-        override
-        returns (uint256[] memory amounts)
-    {
+    function getAmountsOut(
+        uint256 amountIn, 
+        address[] memory path
+    ) public view virtual override returns (uint256[] memory amounts) {
         return OutswapV1Library01.getAmountsOut(factory, amountIn, path);
     }
 
-    function getAmountsIn(uint256 amountOut, address[] memory path)
-        public
-        view
-        virtual
-        override
-        returns (uint256[] memory amounts)
-    {
+    function getAmountsIn(
+        uint256 amountOut, 
+        address[] memory path
+    ) public view virtual override returns (uint256[] memory amounts) {
         return OutswapV1Library01.getAmountsIn(factory, amountOut, path);
     }
 }
