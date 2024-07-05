@@ -191,7 +191,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -200,15 +199,13 @@ interface IOutswapV1Router {
         uint256 amountInMax,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
     function swapExactETHForTokens(
         uint256 amountOutMin, 
         address[] calldata path, 
-        address to, 
-        address referrer, 
+        address to,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
@@ -217,7 +214,6 @@ interface IOutswapV1Router {
         uint256 amountInMax,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -226,7 +222,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -234,7 +229,6 @@ interface IOutswapV1Router {
         uint256 amountOut, 
         address[] calldata path, 
         address to, 
-        address referrer,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
@@ -243,7 +237,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -252,7 +245,6 @@ interface IOutswapV1Router {
         uint256 amountInMax,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -261,7 +253,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -270,7 +261,6 @@ interface IOutswapV1Router {
         uint256 amountOut,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -280,8 +270,7 @@ interface IOutswapV1Router {
     function swapExactETHForUSDB(
         uint256 amountOutMin, 
         address[] calldata path, 
-        address to, 
-        address referrer,
+        address to,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
@@ -290,7 +279,6 @@ interface IOutswapV1Router {
         uint256 amountInMax,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -299,15 +287,13 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
     function swapETHForExactUSDB(
         uint256 amountOut, 
         address[] calldata path, 
-        address to, 
-        address referrer,
+        address to,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
@@ -316,7 +302,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external;
 
@@ -324,7 +309,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external payable;
 
@@ -333,7 +317,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external;
 
@@ -342,7 +325,6 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external;
 
@@ -351,25 +333,34 @@ interface IOutswapV1Router {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
-        address referrer,
         uint256 deadline
     ) external;
 
-    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) external pure returns (uint256 amountB);
-    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
-        external
-        pure
-        returns (uint256 amountOut);
-    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
-        external
-        pure
-        returns (uint256 amountIn);
-    function getAmountsOut(uint256 amountIn, address[] calldata path)
-        external
-        view
-        returns (uint256[] memory amounts);
-    function getAmountsIn(uint256 amountOut, address[] calldata path)
-        external
-        view
-        returns (uint256[] memory amounts);
+    function quote(
+        uint256 amountA, 
+        uint256 reserveA, 
+        uint256 reserveB
+    ) external pure returns (uint256 amountB);
+
+    function getAmountOut(
+        uint256 amountIn, 
+        uint256 reserveIn, 
+        uint256 reserveOut
+    ) external pure returns (uint256 amountOut);
+
+    function getAmountIn(
+        uint256 amountOut, 
+        uint256 reserveIn, 
+        uint256 reserveOut
+    ) external pure returns (uint256 amountIn);
+
+    function getAmountsOut(
+        uint256 amountIn, 
+        address[] memory path
+    ) external view returns (uint256[] memory amounts);
+
+    function getAmountsIn(
+        uint256 amountOut, 
+        address[] memory path
+    ) external view returns (uint256[] memory amounts);
 }

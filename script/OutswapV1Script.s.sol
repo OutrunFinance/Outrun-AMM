@@ -9,6 +9,7 @@ import "../src/core/OutswapV1Factory01.sol";
 import "../src/core/OutswapV1Factory02.sol";
 import "../src/router/OutswapV1Router01.sol";
 import "../src/router/OutswapV1Router02.sol";
+import "../src/referral/ReferralManager.sol";
 import "../src/router/OutrunMulticall.sol";
 
 contract OutswapV1Script is BaseScript {
@@ -18,6 +19,7 @@ contract OutswapV1Script is BaseScript {
     address internal owner;
     address internal feeTo;
     address internal gasManager;
+    address internal referralManager;
 
     OutswapV1Factory01 internal factory0;
     OutswapV1Factory02 internal factory1;
@@ -36,6 +38,8 @@ contract OutswapV1Script is BaseScript {
         console.log("1% Fee Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
 
+        referralManager = address(new ReferralManager(owner, gasManager));
+        console.log("ReferralManager deployed on %s", referralManager);
         // factory0 = new OutswapV1Factory0(owner, gasManager);
         // factory0.setFeeTo(feeTo);
         // address factory0Addr = address(factory0);
@@ -57,6 +61,6 @@ contract OutswapV1Script is BaseScript {
     }
 
     function deployRouter(address factoryAddr) internal returns (address routerAddr) {
-        routerAddr = address(new OutswapV1Router01(factoryAddr, orETH, orUSD, USDB, gasManager));
+        routerAddr = address(new OutswapV1Router01(factoryAddr, orETH, orUSD, USDB, referralManager, gasManager));
     }
 }
