@@ -22,8 +22,8 @@ contract OutswapV1Script is BaseScript {
     address internal registrar;
     address internal referralManager;
 
-    OutswapV1Factory01 internal factory0;
-    OutswapV1Factory02 internal factory1;
+    OutswapV1Factory01 internal factory01;
+    OutswapV1Factory02 internal factory02;
 
     function run() public broadcaster {
         orETH = vm.envAddress("ORETH");
@@ -40,29 +40,32 @@ contract OutswapV1Script is BaseScript {
         console.log("1% Fee Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
 
+        // ReferralManager
         referralManager = address(new ReferralManager(registrar, gasManager));
         console.log("ReferralManager deployed on %s", referralManager);
-        // factory0 = new OutswapV1Factory0(owner, gasManager);
-        // factory0.setFeeTo(feeTo);
-        // address factory0Addr = address(factory0);
-        // address router0Addr = deployRouter(factory0Addr);
-        // console.log("OutswapV1Factory0 deployed on %s", factory0Addr);
-        // console.log("OutswapV1Router0 deployed on %s", router0Addr);
 
-        // The initCode for the OutswapV1Library needs to be modified first.
-        // factory1 = new OutswapV1Factory1(owner, gasManager);
-        // factory1.setFeeTo(feeTo);
-        // address factory1Addr = address(factory1);
-        // address router1Addr = deployRouter(factory1Addr);
-        // console.log("OutswapV1Factory1 deployed on %s", factory1Addr);
-        // console.log("OutswapV1Router1 deployed on %s", router1Addr);
-
+        // Multicall
         address multicall = address(new OutrunMulticall(gasManager));
         console.log("OutrunMulticall deployed on %s", multicall);
 
-    }
+        // OutswapV1Factory01
+        factory01 = new OutswapV1Factory01(owner, gasManager);
+        factory01.setFeeTo(feeTo);
+        address factory01Addr = address(factory01);
+        console.log("OutswapV1Factory01 deployed on %s", factory01Addr);
 
-    function deployRouter(address factoryAddr) internal returns (address routerAddr) {
-        routerAddr = address(new OutswapV1Router01(factoryAddr, orETH, orUSD, USDB, referralManager, gasManager));
+        // OutswapV1Factory02
+        factory02 = new OutswapV1Factory02(owner, gasManager);
+        factory02.setFeeTo(feeTo);
+        address factory02Addr = address(factory02);
+        console.log("OutswapV1Factory02 deployed on %s", factory02Addr);
+
+        // OutswapV1Router01
+        address router01Addr = address(new OutswapV1Router01(factory01Addr, orETH, orUSD, USDB, referralManager, gasManager));
+        console.log("OutswapV1Router01 deployed on %s", router01Addr);
+
+        // OutswapV1Router02
+        address router02Addr = address(new OutswapV1Router02(factory02Addr, orETH, orUSD, USDB, referralManager, gasManager));
+        console.log("OutswapV1Router02 deployed on %s", router02Addr);
     }
 }
