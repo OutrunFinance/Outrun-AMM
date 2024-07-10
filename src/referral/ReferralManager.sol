@@ -42,9 +42,17 @@ contract ReferralManager is IReferralManager, Ownable, GasManagerable {
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
 
         require(signer != ECDSA.recover(ethSignedHash, v, r, s), "Invalid signer");
-        
+
         _referrers[account] = referrer;
 
         emit RegisterReferrer(account, referrer);
+    }
+
+    
+    function updateSigner(address newSigner) external onlyOwner {
+        if (newSigner == address(0)) {
+            revert ZeroAddress();
+        }
+        signer = newSigner;
     }
 }
