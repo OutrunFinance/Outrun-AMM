@@ -356,7 +356,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
      */
     // requires the initial amount to have already been sent to the first pair
     function _swap(uint256[] memory amounts, address[] memory path, address _to) internal virtual {
-        address referrer = IReferralManager(referralManager).queryReferrer(_to);
+        address referrer = IReferralManager(referralManager).referrerOf(_to);
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = OutswapV1Library02.sortTokens(input, output);
@@ -612,7 +612,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
      */
     // requires the initial amount to have already been sent to the first pair
     function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {
-        address referrer = IReferralManager(referralManager).queryReferrer(_to);
+        address referrer = IReferralManager(referralManager).referrerOf(_to);
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = OutswapV1Library02.sortTokens(input, output);
