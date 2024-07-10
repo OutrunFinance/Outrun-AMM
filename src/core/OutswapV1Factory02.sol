@@ -24,7 +24,7 @@ contract OutswapV1Factory02 is IOutswapV1Factory, Ownable, GasManagerable {
         require(token0 != address(0), "Outrun AMM: ZERO_ADDRESS");
         require(getPair[token0][token1] == address(0), "Outrun AMM: PAIR_EXISTS"); // single check is sufficient
         bytes32 _salt = keccak256(abi.encodePacked(token0, token1));
-        pair = address(new OutswapV1Pair02{salt: _salt}(gasManager()));
+        pair = address(new OutswapV1Pair02{salt: _salt}(gasManager));
         IOutswapV1Pair(pair).initialize(token0, token1);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
