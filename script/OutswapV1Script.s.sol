@@ -20,6 +20,7 @@ contract OutswapV1Script is BaseScript {
     address internal feeTo;
     address internal gasManager;
     address internal registrar;
+    address internal signer;
     address internal referralManager;
 
     OutswapV1Factory01 internal factory01;
@@ -33,6 +34,7 @@ contract OutswapV1Script is BaseScript {
         feeTo = vm.envAddress("FEE_TO");
         gasManager = vm.envAddress("GAS_MANAGER");
         registrar = vm.envAddress("REGISTRAR");
+        signer = vm.envAddress("SIGNER");
         
         console.log("0.3% Fee Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair01).creationCode, abi.encode(gasManager))));
@@ -41,7 +43,7 @@ contract OutswapV1Script is BaseScript {
         console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
 
         // ReferralManager
-        referralManager = address(new ReferralManager(registrar, gasManager));
+        referralManager = address(new ReferralManager(registrar, gasManager, signer));
         console.log("ReferralManager deployed on %s", referralManager);
 
         // Multicall
@@ -61,11 +63,13 @@ contract OutswapV1Script is BaseScript {
         console.log("OutswapV1Factory02 deployed on %s", factory02Addr);
 
         // OutswapV1Router01
-        address router01Addr = address(new OutswapV1Router01(factory01Addr, orETH, orUSD, USDB, referralManager, gasManager));
+        OutswapV1Router01 router01 = new OutswapV1Router01(factory01Addr, orETH, orUSD, USDB, referralManager, gasManager);
+        address router01Addr = address(router01);
         console.log("OutswapV1Router01 deployed on %s", router01Addr);
 
         // OutswapV1Router02
-        address router02Addr = address(new OutswapV1Router02(factory02Addr, orETH, orUSD, USDB, referralManager, gasManager));
+        OutswapV1Router02 router02 = new OutswapV1Router02(factory02Addr, orETH, orUSD, USDB, referralManager, gasManager);
+        address router02Addr = address(router02);
         console.log("OutswapV1Router02 deployed on %s", router02Addr);
     }
 }
