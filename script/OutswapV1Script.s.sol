@@ -36,11 +36,11 @@ contract OutswapV1Script is BaseScript {
         registrar = vm.envAddress("REGISTRAR");
         signer = vm.envAddress("SIGNER");
         
-        console.log("0.3% Fee Pair initcode:");
-        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair01).creationCode, abi.encode(gasManager))));
+        // console.log("0.3% Fee Pair initcode:");
+        // console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair01).creationCode, abi.encode(gasManager))));
 
-        console.log("1% Fee Pair initcode:");
-        console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
+        // console.log("1% Fee Pair initcode:");
+        // console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
 
         // // ReferralManager
         // referralManager = address(new ReferralManager(registrar, gasManager, signer));
@@ -63,13 +63,13 @@ contract OutswapV1Script is BaseScript {
         // console.log("OutswapV1Factory02 deployed on %s", factory02Addr);
 
         // OutswapV1Router01
-        // OutswapV1Router01 router01 = new OutswapV1Router01(0x9d5e4DB7B0C2142e764A630d7EDFF29c5C3001DB, orETH, orUSD, USDB, 0x0ace66feF47f236b98d0fD5eC6e9A2D9453063F2, gasManager);
+        // OutswapV1Router01 router01 = new OutswapV1Router01(0x73249d1DF1434228693Cce32C2b97EE5BD464220, orETH, orUSD, USDB, 0xC227bA17a4bF33945eBD9B9CCa6b2039d8095b41, gasManager);
         // address router01Addr = address(router01);
         // console.log("OutswapV1Router01 deployed on %s", router01Addr);
 
-        // // OutswapV1Router02
-        // OutswapV1Router02 router02 = new OutswapV1Router02(0x87ac8C7877d8e89C7Dc89F1F86007F5EA8eD900A, orETH, orUSD, USDB, 0x0ace66feF47f236b98d0fD5eC6e9A2D9453063F2, gasManager);
-        // address router02Addr = address(router02);
-        // console.log("OutswapV1Router02 deployed on %s", router02Addr);
+        // OutswapV1Router02
+        OutswapV1Router02 router02 = new OutswapV1Router02(0x5E53a7C3753B46BE021848c62274FEeAf28A349e, orETH, orUSD, USDB, 0xC227bA17a4bF33945eBD9B9CCa6b2039d8095b41, gasManager);
+        address router02Addr = address(router02);
+        console.log("OutswapV1Router02 deployed on %s", router02Addr);
     }
 }
