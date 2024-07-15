@@ -16,8 +16,6 @@ contract ReferralManager is IReferralManager, Ownable, GasManagerable {
 
     mapping(address account => address) private _referrers;
 
-    error ExpiredSignature(uint256 deadLine);
-
     constructor(address _registrar, address _gasManager, address _signer) Ownable(_registrar) GasManagerable(_gasManager) {
         signer = _signer;
     }
@@ -34,14 +32,14 @@ contract ReferralManager is IReferralManager, Ownable, GasManagerable {
         bytes32 r, 
         bytes32 s
     ) external override {
-        require(account != address(0) && referrer != address(0), "Zero address");
-        require(_referrers[account] == address(0), "Already register");
-        require(block.timestamp > deadline, "Expired signature");
+        require(account != address(0) && referrer != address(0), ZeroAddress());
+        require(_referrers[account] == address(0), AlreadyRegister());
+        require(block.timestamp > deadline, ExpiredSignature(deadline));
 
         bytes32 messageHash = keccak256(abi.encode(account, referrer, block.chainid , deadline));
         bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
 
-        require(signer != ECDSA.recover(ethSignedHash, v, r, s), "Invalid signer");
+        require(signer != ECDSA.recover(ethSignedHash, v, r, s), InvalidSigner());
 
         _referrers[account] = referrer;
 
@@ -50,9 +48,11 @@ contract ReferralManager is IReferralManager, Ownable, GasManagerable {
 
     
     function updateSigner(address newSigner) external onlyOwner {
-        if (newSigner == address(0)) {
-            revert ZeroAddress();
-        }
+        require(newSigner != address(0), ZeroAddress());
+
+        address oldSigner = signer;
         signer = newSigner;
+
+        emit UpdateSigner(oldSigner, newSigner);
     }
 }

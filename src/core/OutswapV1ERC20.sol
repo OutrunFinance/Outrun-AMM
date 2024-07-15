@@ -6,9 +6,8 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 import "./interfaces/IOutswapV1ERC20.sol";
 
-contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
-    bytes32 public constant PERMIT_TYPEHASH =
-        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+abstract contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
+    bytes32 public constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
     string public constant name = "Outswap V1";
     string public constant symbol = "OUT-V1";
@@ -67,33 +66,30 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
         return true;
     }
 
-    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
-        public
-        virtual
-    {
-        if (block.timestamp > deadline) {
-            revert ERC2612ExpiredSignature(deadline);
-        }
+    function permit(
+        address owner, 
+        address spender, 
+        uint256 value, 
+        uint256 deadline, 
+        uint8 v, 
+        bytes32 r, 
+        bytes32 s
+    ) external virtual {
+        require(block.timestamp <= deadline, ERC2612ExpiredSignature(deadline));
 
         bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, _useNonce(owner), deadline));
-
         bytes32 hash = _hashTypedDataV4(structHash);
-
         address signer = ECDSA.recover(hash, v, r, s);
-        if (signer != owner) {
-            revert ERC2612InvalidSigner(signer, owner);
-        }
+
+        require(signer == owner, ERC2612InvalidSigner(signer, owner));
 
         _approve(owner, spender, value);
     }
 
     function _transfer(address from, address to, uint256 value) internal {
-        if (from == address(0)) {
-            revert ERC20InvalidSender(address(0));
-        }
-        if (to == address(0)) {
-            revert ERC20InvalidReceiver(address(0));
-        }
+        require(from != address(0), ERC20InvalidSender(address(0)));
+        require(to != address(0), ERC20InvalidReceiver(address(0)));
+
         _update(from, to, value);
     }
 
@@ -103,9 +99,8 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
             totalSupply += value;
         } else {
             uint256 fromBalance = _balances[from];
-            if (fromBalance < value) {
-                revert ERC20InsufficientBalance(from, fromBalance, value);
-            }
+            require(fromBalance >= value, ERC20InsufficientBalance(from, fromBalance, value));
+
             unchecked {
                 // Overflow not possible: value <= fromBalance <= totalSupply.
                 _balances[from] = fromBalance - value;
@@ -132,9 +127,8 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
     }
 
     function _burn(address account, uint256 value) internal {
-        if (account == address(0)) {
-            revert ERC20InvalidSender(address(0));
-        }
+        require(account != address(0), ERC20InvalidSender(address(0)));
+
         _update(account, address(0), value);
     }
 
@@ -143,12 +137,9 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
     }
 
     function _approve(address owner, address spender, uint256 value, bool emitEvent) internal {
-        if (owner == address(0)) {
-            revert ERC20InvalidApprover(address(0));
-        }
-        if (spender == address(0)) {
-            revert ERC20InvalidSpender(address(0));
-        }
+        require(owner != address(0), ERC20InvalidApprover(address(0)));
+        require(spender != address(0), ERC20InvalidSpender(address(0)));
+
         _allowances[owner][spender] = value;
         if (emitEvent) {
             emit Approval(owner, spender, value);
@@ -158,9 +149,8 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
     function _spendAllowance(address owner, address spender, uint256 value) internal {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
-            if (currentAllowance < value) {
-                revert ERC20InsufficientAllowance(spender, currentAllowance, value);
-            }
+            require(currentAllowance >= value, ERC20InsufficientAllowance(spender, currentAllowance, value));
+
             unchecked {
                 _approve(owner, spender, currentAllowance - value, false);
             }
@@ -178,8 +168,6 @@ contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
 
     function _useCheckedNonce(address owner, uint256 nonce) internal {
         uint256 current = _useNonce(owner);
-        if (nonce != current) {
-            revert InvalidAccountNonce(owner, current);
-        }
+        require(nonce == current, InvalidAccountNonce(owner, current));
     }
 }

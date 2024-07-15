@@ -8,7 +8,7 @@ abstract contract GasManagerable {
 
     address public gasManager;
 
-    error ZeroAddress();
+    error GasZeroAddress();
 
     error UnauthorizedAccount(address account);
 
@@ -17,9 +17,8 @@ abstract contract GasManagerable {
     event GasManagerTransferred(address indexed previousGasManager, address indexed newGasManager);
 
     constructor(address initialGasManager) {
-        if (initialGasManager == address(0)) {
-            revert ZeroAddress();
-        }
+        require(initialGasManager != address(0), GasZeroAddress());
+
         _transferGasManager(initialGasManager);
 
         BLAST.configureClaimableGas();
@@ -27,9 +26,8 @@ abstract contract GasManagerable {
 
     modifier onlyGasManager() {
         address msgSender = msg.sender;
-        if (gasManager != msgSender) {
-            revert UnauthorizedAccount(msgSender);
-        }
+        require(gasManager == msgSender, UnauthorizedAccount(msgSender));
+        
         _;
     }
 
@@ -46,24 +44,23 @@ abstract contract GasManagerable {
      * @param recipient - Address of receive gas
      */
     function claimMaxGas(address recipient) external onlyGasManager returns (uint256 gasAmount) {
-        if (recipient == address(0)) {
-            revert ZeroAddress();
-        }
+        require(recipient != address(0), GasZeroAddress());
 
         gasAmount = BLAST.claimMaxGas(address(this), recipient);
+
         emit ClaimMaxGas(recipient, gasAmount);
     }
 
     function transferGasManager(address newGasManager) public onlyGasManager {
-        if (newGasManager == address(0)) {
-            revert ZeroAddress();
-        }
+        require(newGasManager != address(0), GasZeroAddress());
+
         _transferGasManager(newGasManager);
     }
 
     function _transferGasManager(address newGasManager) internal {
         address oldGasManager = gasManager;
         gasManager = newGasManager;
+
         emit GasManagerTransferred(oldGasManager, newGasManager);
     }
 }

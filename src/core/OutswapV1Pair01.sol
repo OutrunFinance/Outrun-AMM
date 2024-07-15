@@ -40,7 +40,8 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     uint256 private unlocked = 1;
 
     modifier lock() {
-        require(unlocked == 1, "Outrun AMM: LOCKED");
+        require(unlocked == 1, Locked());
+
         unlocked = 0;
         _;
         unlocked = 1;
@@ -74,7 +75,8 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
 
     // called once by the factory at time of deployment
     function initialize(address _token0, address _token1) external {
-        require(msg.sender == factory, "Outrun AMM: FORBIDDEN"); // sufficient check
+        require(msg.sender == factory, Forbidden());
+
         token0 = _token0;
         token1 = _token1;
     }
@@ -99,11 +101,14 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         } else {
             liquidity = Math.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
         }
-        require(liquidity > 0, "Outrun AMM: INSUFFICIENT_LIQUIDITY_MINTED");
-        _mint(to, liquidity);
 
+        require(liquidity > 0, InsufficientLiquidityMinted());
+
+        _mint(to, liquidity);
         _update(balance0, balance1, _reserve0, _reserve1);
+
         kLast = uint256(reserve0) * uint256(reserve1); // reserve0 and reserve1 are up-to-date
+
         emit Mint(msg.sender, to, amount0, amount1);
     }
 
@@ -124,7 +129,9 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         uint256 _totalSupply = totalSupply; // must be defined here since totalSupply can update in _calcFeeX128
         amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
-        require(amount0 > 0 && amount1 > 0, "Outrun AMM: INSUFFICIENT_LIQUIDITY_BURNED");
+
+        require(amount0 > 0 && amount1 > 0, InsufficientLiquidityBurned());
+
         _burn(address(this), liquidity);
         _safeTransfer(_token0, to, amount0);
         _safeTransfer(_token1, to, amount1);
@@ -132,7 +139,9 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         balance1 = IERC20(_token1).balanceOf(address(this));
 
         _update(balance0, balance1, _reserve0, _reserve1);
+
         kLast = uint256(reserve0) * uint256(reserve1); // reserve0 and reserve1 are up-to-date
+
         emit Burn(msg.sender, amount0, amount1, to);
     }
 
@@ -145,16 +154,17 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
      * @notice - this low-level function should be called from a contract which performs important safety checks
      */
     function swap(uint256 amount0Out, uint256 amount1Out, address to, address referrer, bytes calldata data) external lock {
-        require(amount0Out > 0 || amount1Out > 0, "Outrun AMM: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amount0Out > 0 || amount1Out > 0, InsufficientOutputAmount());
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, "Outrun AMM: INSUFFICIENT_LIQUIDITY");
+        require(amount0Out < _reserve0 && amount1Out < _reserve1, InsufficientLiquidity());
 
         uint256 balance0;
         uint256 balance1;
         address _token0 = token0;
         address _token1 = token1;
         {
-            require(to != _token0 && to != _token1, "Outrun AMM: INVALID_TO");
+            require(to != _token0 && to != _token1, InvalidTo());
+
             if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out);
             if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out);
             if (data.length > 0) IOutswapV1Callee(to).OutswapV1Call(msg.sender, amount0Out, amount1Out, data);
@@ -162,9 +172,13 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
             balance1 = IERC20(_token1).balanceOf(address(this));
         }
 
-        uint256 amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
-        uint256 amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
-        require(amount0In > 0 || amount1In > 0, "Outrun AMM: INSUFFICIENT_INPUT_AMOUNT");
+        uint256 amount0In;
+        uint256 amount1In;
+        unchecked {
+            amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
+            amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
+        }
+        require(amount0In > 0 || amount1In > 0, InsufficientInputAmount());
 
         uint256 rebateFee0;
         uint256 rebateFee1;
@@ -174,9 +188,10 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
             // 0.3% swap fee
             uint256 balance0Adjusted = balance0 * 1000 - amount0In * 3;
             uint256 balance1Adjusted = balance1 * 1000 - amount1In * 3;
+            
             require(
                 balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * 1000 ** 2,
-                "Outrun AMM: K"
+                ProductKLoss()
             );
 
             address feeTo = _feeTo();
@@ -184,31 +199,39 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
                 // 0.3% * 30% as protocolFee
                 if (amount0In > 0) {
                     protocolFee0 = amount0In * 9 / 10000;
+                    unchecked {
+                        balance0 -= protocolFee0;
+                    }
                     _safeTransfer(_token0, feeTo, protocolFee0);
-                    balance0 -= protocolFee0;
                 }
                 
                 if (amount1In > 0) {
                     protocolFee1 = amount1In * 9 / 10000;
+                    unchecked {
+                        balance1 -= protocolFee1;
+                    }
                     _safeTransfer(_token1, feeTo, protocolFee1);
-                    balance1 -= protocolFee1;
                 }
             } else {
                 // 0.3% * 30% * 20% as rebateFee, 0.3% * 30% * 80% as protocolFee
                 if (amount0In > 0) {
                     rebateFee0 = amount0In * 9 / 50000;
                     protocolFee0 = amount0In * 9 / 12500;
+                    unchecked {
+                        balance0 -= rebateFee0 + protocolFee0; 
+                    }
                     _safeTransfer(_token0, referrer, rebateFee0);
                     _safeTransfer(_token0, feeTo, protocolFee0);
-                    balance0 -= rebateFee0 + protocolFee0;
                 }
                 
                 if (amount1In > 0) {
                     rebateFee1 = amount1In * 9 / 50000;
                     protocolFee1 = amount1In * 9 / 12500;
+                    unchecked {
+                        balance1 -= rebateFee1 + protocolFee1;     
+                    }
                     _safeTransfer(_token1, referrer, rebateFee1);
                     _safeTransfer(_token1, feeTo, protocolFee1);
-                    balance1 -= rebateFee1 + protocolFee1;
                 }
             }
         }
@@ -234,8 +257,12 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         _calcFeeX128(msgSender);
 
         uint256 feeX128 = unClaimedFeesX128[msgSender];
-        require(feeX128 > 0, "Outrun AMM: INSUFFICIENT_UNCLAIMED_FEE");
-        uint256 unClaimedFee = feeX128 / FixedPoint128.Q128;
+        require(feeX128 > 0, InsufficientUnclaimedFee());
+        
+        uint256 unClaimedFee;
+        unchecked {
+            unClaimedFee = feeX128 / FixedPoint128.Q128;
+        }
         unClaimedFeesX128[msgSender] = 0;
         _mint(address(this), unClaimedFee);
 
@@ -244,9 +271,12 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         address _token0 = token0;
         address _token1 = token1;
         uint256 _totalSupply = totalSupply;
-        amount0 = unClaimedFee * _reserve0 / _totalSupply;
-        amount1 = unClaimedFee * _reserve1 / _totalSupply;
-        require(amount0 > 0 && amount1 > 0, "Outrun AMM: INSUFFICIENT_LIQUIDITY_BURNED");
+        unchecked {
+            amount0 = unClaimedFee * _reserve0 / _totalSupply;
+            amount1 = unClaimedFee * _reserve1 / _totalSupply;           
+        }
+        require(amount0 > 0 && amount1 > 0, InsufficientLiquidityBurned());
+
         _burn(address(this), unClaimedFee);
         _safeTransfer(_token0, msgSender, amount0);
         _safeTransfer(_token1, msgSender, amount1);
@@ -254,6 +284,7 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         _update(
             IERC20(_token0).balanceOf(address(this)), IERC20(_token1).balanceOf(address(this)), _reserve0, _reserve1
         );
+
         kLast = uint256(reserve0) * uint256(reserve1);
     }
 
@@ -292,20 +323,27 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
 
     function _safeTransfer(address token, address to, uint256 value) private {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), "Outrun AMM: TRANSFER_FAILED");
+        require(success && (data.length == 0 || abi.decode(data, (bool))), TransferFailed());
     }
 
     /**
      * @dev update reserves and, on the first call per block, price accumulators
      */
     function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {
-        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "Outrun AMM: OVERFLOW");
-        uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+        require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, Overflow());
+
+        uint32 blockTimestamp;
+        uint32 timeElapsed;
+        unchecked {
+            blockTimestamp = uint32(block.timestamp % 2 ** 32);
+            timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+        }
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
             // * never overflows, and + overflow is desired
-            price0CumulativeLast += uint256(UQ112x112.encode(_reserve1).uqdiv(_reserve0)) * timeElapsed;
-            price1CumulativeLast += uint256(UQ112x112.encode(_reserve0).uqdiv(_reserve1)) * timeElapsed;
+            unchecked {
+                price0CumulativeLast += uint256(UQ112x112.encode(_reserve1).uqdiv(_reserve0)) * timeElapsed;
+                price1CumulativeLast += uint256(UQ112x112.encode(_reserve0).uqdiv(_reserve1)) * timeElapsed;
+            }
         }
         reserve0 = uint112(balance0);
         reserve1 = uint112(balance1);

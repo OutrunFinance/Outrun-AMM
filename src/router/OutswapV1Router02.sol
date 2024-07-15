@@ -21,7 +21,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
     address public immutable referralManager;
 
     modifier ensure(uint256 deadline) {
-        require(deadline >= block.timestamp, "OutswapV1Router: EXPIRED");
+        require(deadline >= block.timestamp, Expired());
         _;
     }
 
@@ -64,12 +64,12 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         } else {
             uint256 amountBOptimal = OutswapV1Library02.quote(amountADesired, reserveA, reserveB);
             if (amountBOptimal <= amountBDesired) {
-                require(amountBOptimal >= amountBMin, "OutswapV1Router: INSUFFICIENT_B_AMOUNT");
+                require(amountBOptimal >= amountBMin, InsufficientBAmount());
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint256 amountAOptimal = OutswapV1Library02.quote(amountBDesired, reserveB, reserveA);
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMin, "OutswapV1Router: INSUFFICIENT_A_AMOUNT");
+                require(amountAOptimal >= amountAMin, InsufficientAAmount());
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -162,8 +162,8 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         (uint256 amount0, uint256 amount1) = IOutswapV1Pair(pair).burn(to);
         (address token0,) = OutswapV1Library02.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= amountAMin, "OutswapV1Router: INSUFFICIENT_A_AMOUNT");
-        require(amountB >= amountBMin, "OutswapV1Router: INSUFFICIENT_B_AMOUNT");
+        require(amountA >= amountAMin, InsufficientAAmount());
+        require(amountB >= amountBMin, InsufficientBAmount());
     }
 
     function removeLiquidityETH(
@@ -378,7 +378,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = OutswapV1Library02.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -393,7 +393,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = OutswapV1Library02.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, "OutswapV1Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -406,9 +406,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORETH, InvalidPath());
         amounts = OutswapV1Library02.getAmountsOut(factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         IORETH(ORETH).deposit{value: amounts[0]}();
         assert(IORETH(ORETH).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -421,9 +421,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[path.length - 1] == ORETH, InvalidPath());
         amounts = OutswapV1Library02.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, "OutswapV1Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -439,9 +439,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[path.length - 1] == ORETH, InvalidPath());
         amounts = OutswapV1Library02.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -456,9 +456,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORETH, InvalidPath());
         amounts = OutswapV1Library02.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, "OutswapV1Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= msg.value, ExcessiveInputAmount());
         IORETH(ORETH).deposit{value: amounts[0]}();
         assert(IORETH(ORETH).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -473,9 +473,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORUSD, InvalidPath());
         amounts = OutswapV1Library02.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
         IORUSD(ORUSD).deposit(amounts[0]);
         assert(IORUSD(ORUSD).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]));
@@ -489,9 +489,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[path.length - 1] == ORUSD, InvalidPath());
         amounts = OutswapV1Library02.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, "OutswapV1Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -507,9 +507,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[path.length - 1] == ORUSD, InvalidPath());
         amounts = OutswapV1Library02.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -525,9 +525,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORUSD, InvalidPath());
         amounts = OutswapV1Library02.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, "OutswapV1Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
         TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
         IORUSD(ORUSD).deposit(amounts[0]);
         assert(IORUSD(ORUSD).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]));
@@ -543,9 +543,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH && path[path.length - 1] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORETH && path[path.length - 1] == ORUSD, InvalidPath());
         amounts = OutswapV1Library02.getAmountsOut(factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         IORETH(ORETH).deposit{value: amounts[0]}();
         assert(IORETH(ORETH).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, address(this));
@@ -560,9 +560,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD && path[path.length - 1] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORUSD && path[path.length - 1] == ORETH, InvalidPath());
         amounts = OutswapV1Library02.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, "OutswapV1Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
         TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
         IORUSD(ORUSD).deposit(amounts[0]);
         TransferHelper.safeTransfer(path[0], OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]);
@@ -578,9 +578,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD && path[path.length - 1] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORUSD && path[path.length - 1] == ORETH, InvalidPath());
         amounts = OutswapV1Library02.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
         IORUSD(ORUSD).deposit(amounts[0]);
         TransferHelper.safeTransfer(path[0], OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]);
@@ -595,9 +595,9 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH && path[path.length - 1] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORETH && path[path.length - 1] == ORUSD, InvalidPath());
         amounts = OutswapV1Library02.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, "OutswapV1Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= msg.value, ExcessiveInputAmount());
         IORETH(ORETH).deposit{value: amounts[0]}();
         assert(IORETH(ORETH).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, address(this));
@@ -647,7 +647,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
-            "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT"
+            InsufficientOutputAmount()
         );
     }
 
@@ -657,7 +657,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) {
-        require(path[0] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORETH, InvalidPath());
         uint256 amountIn = msg.value;
         IORETH(ORETH).deposit{value: amountIn}();
         assert(IORETH(ORETH).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amountIn));
@@ -665,7 +665,7 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
-            "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT"
+            InsufficientOutputAmount()
         );
     }
 
@@ -676,13 +676,13 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) {
-        require(path[path.length - 1] == ORETH, "OutswapV1Router: INVALID_PATH");
+        require(path[path.length - 1] == ORETH, InvalidPath());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint256 amountOut = IERC20(ORETH).balanceOf(address(this));
-        require(amountOut >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut >= amountOutMin, InsufficientOutputAmount());
         IORETH(ORETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
     }
@@ -694,14 +694,14 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) {
-        require(path[0] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[0] == ORUSD, InvalidPath());
         IORUSD(ORUSD).deposit(amountIn);
         assert(IORUSD(ORUSD).transfer(OutswapV1Library02.pairFor(factory, path[0], path[1]), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
-            "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT"
+            InsufficientOutputAmount()
         );
     }
 
@@ -712,13 +712,13 @@ contract OutswapV1Router02 is IOutswapV1Router, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) {
-        require(path[path.length - 1] == ORUSD, "OutswapV1Router: INVALID_PATH");
+        require(path[path.length - 1] == ORUSD, InvalidPath());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutswapV1Library02.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint256 amountOut = IERC20(ORUSD).balanceOf(address(this));
-        require(amountOut >= amountOutMin, "OutswapV1Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut >= amountOutMin, InsufficientOutputAmount());
         IORUSD(ORUSD).withdraw(amountOut);
         TransferHelper.safeTransfer(USDB, to, amountOut);
     }

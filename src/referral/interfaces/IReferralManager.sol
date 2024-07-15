@@ -13,5 +13,17 @@ interface IReferralManager {
         bytes32 s
     ) external;
 
+
+    error ZeroAddress();
+
+    error InvalidSigner();
+
+    error AlreadyRegister();
+
+    error ExpiredSignature(uint256 deadLine);
+
+
     event RegisterReferrer(address indexed account, address indexed referrer);
+
+    event UpdateSigner(address oldSigner, address newSigner);
 }

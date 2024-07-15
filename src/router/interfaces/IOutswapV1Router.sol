@@ -3,9 +3,13 @@ pragma solidity ^0.8.26;
 
 interface IOutswapV1Router {
     function factory() external view returns (address);
+
     function ORETH() external view returns (address);
+
     function ORUSD() external view returns (address);
+
     function USDB() external view returns (address);
+
 
     /**
      * addLiquidity *
@@ -336,6 +340,7 @@ interface IOutswapV1Router {
         uint256 deadline
     ) external;
 
+
     function quote(
         uint256 amountA, 
         uint256 reserveA, 
@@ -363,4 +368,18 @@ interface IOutswapV1Router {
         uint256 amountOut, 
         address[] memory path
     ) external view returns (uint256[] memory amounts);
+
+    error Expired();
+
+    error InvalidPath();
+
+    error InsufficientBAmount();
+
+    error InsufficientAAmount();
+
+    error ExcessiveInputAmount();
+
+    error InsufficientOutputAmount();
+
+
 }
