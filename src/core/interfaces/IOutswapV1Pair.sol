@@ -12,7 +12,7 @@ interface IOutswapV1Pair {
         uint256 amount1Out,
         address indexed to
     );
-    event SwapFee(
+    event ProtocolFee(
         address indexed referrer,
         uint256 rebateFee0,
         uint256 rebateFee1,
