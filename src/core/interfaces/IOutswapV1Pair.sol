@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 interface IOutswapV1Pair {
     event Mint(address indexed sender, address indexed to, uint256 amount0, uint256 amount1);

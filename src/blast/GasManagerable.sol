@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import "./IBlast.sol";
 
 abstract contract GasManagerable {
     IBlast public constant BLAST = IBlast(0x4300000000000000000000000000000000000002);
 
-    address private _gasManager;
+    address public gasManager;
 
     error ZeroAddress();
 
@@ -27,14 +27,10 @@ abstract contract GasManagerable {
 
     modifier onlyGasManager() {
         address msgSender = msg.sender;
-        if (gasManager() != msgSender) {
+        if (gasManager != msgSender) {
             revert UnauthorizedAccount(msgSender);
         }
         _;
-    }
-
-    function gasManager() public view returns (address) {
-        return _gasManager;
     }
 
     /**
@@ -66,8 +62,8 @@ abstract contract GasManagerable {
     }
 
     function _transferGasManager(address newGasManager) internal {
-        address oldGasManager = _gasManager;
-        _gasManager = newGasManager;
+        address oldGasManager = gasManager;
+        gasManager = newGasManager;
         emit GasManagerTransferred(oldGasManager, newGasManager);
     }
 }
