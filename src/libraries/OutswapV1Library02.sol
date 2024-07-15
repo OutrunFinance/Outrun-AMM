@@ -26,7 +26,7 @@ library OutswapV1Library02 {
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
                             /* bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(OutswapV1Pair).creationCode, abi.encode(gasManager))); */
-                            hex"6ed5fcff41f79ad8b04e04b991c1c7f70b8716a0009cf879f6846ad24c19b73c" // 1% init code hash
+                            hex"892eb66e4bb80115e44efb1122f560ea75e2cfcbafa7071a9e09aafa319e344c" // 1% init code hash
                         )
                     )
                 )
