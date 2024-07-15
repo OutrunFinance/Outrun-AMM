@@ -171,7 +171,7 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         uint256 protocolFee0;
         uint256 protocolFee1;
         {
-            // 0.3% liquidity provider fee
+            // 0.3% swap fee
             uint256 balance0Adjusted = balance0 * 1000 - amount0In * 3;
             uint256 balance1Adjusted = balance1 * 1000 - amount1In * 3;
             require(
@@ -222,7 +222,7 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
         }
 
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
-        emit SwapFee(referrer, rebateFee0, rebateFee1, protocolFee0, protocolFee1);
+        emit ProtocolFee(referrer, rebateFee0, rebateFee1, protocolFee0, protocolFee1);
     }
 
     /**
