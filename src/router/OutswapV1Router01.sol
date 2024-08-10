@@ -41,7 +41,10 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
         IERC20(_usdb).approve(_orUSD, type(uint256).max);
     }
 
-    receive() external payable {}
+    receive() external payable {
+        // only accept ETH via fallback from the ORETH contract
+        require(msg.sender == ORETH, InvaildETHSender());
+    }
 
     /**
      * ADD LIQUIDITY *
@@ -621,8 +624,7 @@ contract OutswapV1Router01 is IOutswapV1Router, GasManagerable {
             {
                 // scope to avoid stack too deep errors
                 (uint256 reserve0, uint256 reserve1,) = pair.getReserves();
-                (uint256 reserveInput, uint256 reserveOutput) =
-                    input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
+                (uint256 reserveInput, uint256 reserveOutput) = input == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
                 amountInput = IERC20(input).balanceOf(address(pair)) - reserveInput;
                 amountOutput = OutswapV1Library01.getAmountOut(amountInput, reserveInput, reserveOutput);
             }

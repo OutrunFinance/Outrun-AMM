@@ -373,6 +373,8 @@ interface IOutswapV1Router {
 
     error InvalidPath();
 
+    error InvaildETHSender();
+
     error InsufficientBAmount();
 
     error InsufficientAAmount();
