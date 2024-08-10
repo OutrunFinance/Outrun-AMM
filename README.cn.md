@@ -1,7 +1,7 @@
 
 ## Outrun AMM
 
-Outrun AMM 基于 Uniswap v2 的设计理念构建，并在此基础上进行了多项创新的改进。以下是其主要创新：
+Outrun AMM 基于经典 AMM 的设计理念构建，并在此基础上进行了多项创新的改进。以下是其主要创新：
 
 + **使用 orETH 和 orUSD 作为中间代币**：Outrun AMM 引入了 orETH 和 orUSD 作为交易对中的中间代币。这种设计可以使得 Outstake 捕获到 Outrun AMM 产生的原生收益，提高协议产生的收益。
 
