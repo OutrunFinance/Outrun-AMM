@@ -35,7 +35,7 @@ Outrun AMM 基于经典 AMM 的设计理念构建，并在此基础上进行了�
 
 + 新资产在集中流动性 AMM 上面临流动性碎片化的问题，新资产往往波动比较大，所以难以确定价格区间的上界和下界，导致流动性会出现突然崩溃的情况。
 
-所以 Outswap 的初始版本—Outrun AMM 基于 Uniswap v2 的设计理念构建，在 Outrun AMM 获得足够的流动性后我们才会推出集中流动性 AMM 版本 - Outrun CLAMM.
+所以 Outswap 的初始版本 — Outrun AMM 基于经典 AMM 的设计理念构建，在 Outrun AMM 获得足够的流动性后我们才会推出集中流动性 AMM 版本 - Outrun CLAMM.
 
 ## 推荐返佣引擎
 
