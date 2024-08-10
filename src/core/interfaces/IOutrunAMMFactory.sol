@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-interface IOutswapV1Factory {
+interface IOutrunAMMFactory {
     function feeTo() external view returns (address);
 
     function allPairs(uint256) external view returns (address pair);

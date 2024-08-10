@@ -4,8 +4,8 @@ pragma abicoder v2;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {BaseDeploy} from "./BaseDeploy.t.sol";
-import {OutswapV1Library01} from 'src/libraries/OutswapV1Library01.sol';
-import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
+import {OutrunAMMLibrary01} from 'src/libraries/OutrunAMMLibrary01.sol';
+import {IOutrunAMMPair} from "src/core/interfaces/IOutrunAMMPair.sol";
 
 contract RouterUSDBMOCK is BaseDeploy {
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
@@ -30,10 +30,10 @@ contract RouterUSDBMOCK is BaseDeploy {
         assertEq(amount1, 1 ether);
         assertEq(liquidity, 1 ether - MINIMUM_LIQUIDITY);
 
-        assertEq(IOutswapV1Pair(pair).token0(), tokens[0]);
-        assertEq(IOutswapV1Pair(pair).token1(), ORUSD);
+        assertEq(IOutrunAMMPair(pair).token0(), tokens[0]);
+        assertEq(IOutrunAMMPair(pair).token1(), ORUSD);
 
-        (uint256 reserve0, uint256 reserve1, ) = IOutswapV1Pair(pair)
+        (uint256 reserve0, uint256 reserve1, ) = IOutrunAMMPair(pair)
             .getReserves();
         assertEq(reserve0, 1 ether);
         assertEq(reserve1, 1 ether);
@@ -48,7 +48,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         IERC20(tokens[0]).approve(address(swapRouter), 1 ether);
         IERC20(USDB).approve(address(swapRouter), 2 ether);
 
-        vm.expectRevert(bytes("OutswapV1Router: INSUFFICIENT_B_AMOUNT"));
+        vm.expectRevert(bytes("OutrunAMMRouter: INSUFFICIENT_B_AMOUNT"));
         swapRouter.addLiquidityUSDB(
             tokens[0],
             1 ether,
@@ -67,7 +67,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         IERC20(tokens[0]).approve(address(swapRouter), 1 ether);
 
         vm.warp(2);
-        vm.expectRevert(bytes("OutswapV1Router: EXPIRED"));
+        vm.expectRevert(bytes("OutrunAMMRouter: EXPIRED"));
         swapRouter.addLiquidityUSDB(
             tokens[0],
             1 ether,
@@ -104,7 +104,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         uint256[] memory amounts = swapRouter.swapExactUSDBForTokens(5000, 4000, path, address(this), block.timestamp + 100);
         vm.stopPrank();
 
-        uint256[] memory amountsCal = OutswapV1Library01.getAmountsOut(OutswapV1Factory, 5000, path);
+        uint256[] memory amountsCal = OutrunAMMLibrary01.getAmountsOut(OutrunAMMFactory, 5000, path);
         assertEq(amounts[0], amountsCal[0]);
     }
 
@@ -122,7 +122,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         uint256[] memory amounts = swapRouter.swapTokensForExactUSDB(4000, 4500, path, address(this), block.timestamp + 100);
         vm.stopPrank();
 
-        uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, 4000, path);
+        uint256[] memory amountsCal = OutrunAMMLibrary01.getAmountsIn(OutrunAMMFactory, 4000, path);
         assertEq(amounts[0], amountsCal[0]);
     }
 
@@ -140,7 +140,7 @@ contract RouterUSDBMOCK is BaseDeploy {
         uint256[] memory amounts = swapRouter.swapExactETHForUSDB{value: 4500}(4000, path, address(this), block.timestamp + 100);
         vm.stopPrank();
 
-        uint256[] memory amountsCal = OutswapV1Library01.getAmountsOut(OutswapV1Factory, 4500, path);
+        uint256[] memory amountsCal = OutrunAMMLibrary01.getAmountsOut(OutrunAMMFactory, 4500, path);
         assertEq(amounts[0], amountsCal[0]);
     }
 

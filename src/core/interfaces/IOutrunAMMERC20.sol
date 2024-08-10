@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-interface IOutswapV1ERC20 {
+interface IOutrunAMMERC20 {
     function name() external pure returns (string memory);
 
     function symbol() external pure returns (string memory);

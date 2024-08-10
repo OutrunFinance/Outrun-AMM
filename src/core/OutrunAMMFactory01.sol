@@ -2,11 +2,11 @@
 pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IOutswapV1Factory.sol";
-import "./OutswapV1Pair02.sol";
+import "./interfaces/IOutrunAMMFactory.sol";
+import "./OutrunAMMPair01.sol";
 import "../blast/GasManagerable.sol";
 
-contract OutswapV1Factory02 is IOutswapV1Factory, Ownable, GasManagerable {
+contract OutrunAMMFactory01 is IOutrunAMMFactory, Ownable, GasManagerable {
     address public feeTo;
 
     address[] public allPairs;
@@ -21,14 +21,14 @@ contract OutswapV1Factory02 is IOutswapV1Factory, Ownable, GasManagerable {
 
     function createPair(address tokenA, address tokenB) external returns (address pair) {
         require(tokenA != tokenB, IdenticalAddresses());
-        
+
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), ZeroAddress());
         require(getPair[token0][token1] == address(0), PairExists()); // single check is sufficient
 
         bytes32 _salt = keccak256(abi.encodePacked(token0, token1));
-        pair = address(new OutswapV1Pair02{salt: _salt}(gasManager));
-        IOutswapV1Pair(pair).initialize(token0, token1);
+        pair = address(new OutrunAMMPair01{salt: _salt}(gasManager));
+        IOutrunAMMPair(pair).initialize(token0, token1);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);

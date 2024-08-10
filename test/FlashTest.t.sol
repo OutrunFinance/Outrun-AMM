@@ -5,13 +5,13 @@ pragma abicoder v2;
 import {BaseDeploy, factoryAtricle, routerAtricle} from "./BaseDeploy.t.sol";
 import {console2} from "forge-std/console2.sol";
 
-import "src/libraries/OutswapV1Library01.sol";
+import "src/libraries/OutrunAMMLibrary01.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
-import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
-import {IOutswapV1Router} from "src/router/interfaces/IOutswapV1Router.sol";
-import {IOutswapV1Callee} from "src/core/interfaces/IOutswapV1Callee.sol";
+import {IOutrunAMMFactory} from "src/core/interfaces/IOutrunAMMFactory.sol";
+import {IOutrunAMMPair} from "src/core/interfaces/IOutrunAMMPair.sol";
+import {IOutrunAMMRouter} from "src/router/interfaces/IOutrunAMMRouter.sol";
+import {IOutrunAMMCallee} from "src/core/interfaces/IOutrunAMMCallee.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* 
@@ -23,7 +23,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
       --> Pool1 for token1/token2 = 1000/1000 and the other for token1/token2 = 100/1000.
  */
 
-contract SimpleFlash is IOutswapV1Callee {
+contract SimpleFlash is IOutrunAMMCallee {
     event Repay(address tokenBorrow, uint256 RepayAmount);
 
     address private immutable owner;
@@ -57,8 +57,8 @@ contract SimpleFlash is IOutswapV1Callee {
             console2.log("path[1]: tokenBorrow, amount1Out: %s", amount1Out);
         }
 
-        address pair = IOutswapV1Factory(IOutswapV1Router(router1).factory()).getPair(path[0], path[1]);
-        IOutswapV1Pair(pair).swap(
+        address pair = IOutrunAMMFactory(IOutrunAMMRouter(router1).factory()).getPair(path[0], path[1]);
+        IOutrunAMMPair(pair).swap(
             amount0Out,
             amount1Out,
             address(this),
@@ -68,7 +68,7 @@ contract SimpleFlash is IOutswapV1Callee {
     }
 
     // This function is called by the token0/token1(1:1) pair1 contract
-    function OutswapV1Call(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external {
+    function OutrunAMMCall(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external {
         (
             address caller,
             address[] memory path,
@@ -79,7 +79,7 @@ contract SimpleFlash is IOutswapV1Callee {
             uint256 borrowAmount
         ) = abi.decode(data, (address, address[], address, address, address, address, uint256));
 
-        address pair1 = IOutswapV1Factory(IOutswapV1Router(router1).factory()).getPair(path[0], path[1]);
+        address pair1 = IOutrunAMMFactory(IOutrunAMMRouter(router1).factory()).getPair(path[0], path[1]);
         require(msg.sender == pair1, "KittyTradeX FlashLoan: not pair");
 
         require(sender == address(this), "KittyTradeX FlashLoan: not sender");
@@ -97,16 +97,16 @@ contract SimpleFlash is IOutswapV1Callee {
 
         // swap the amount of tokenRevenue for 100 tokenBorrow 
         uint256[] memory amounts = new uint256[](2);
-        amounts = OutswapV1Library01.getAmountsOut(IOutswapV1Router(router2).factory(), borrowAmount, swapPath);
+        amounts = OutrunAMMLibrary01.getAmountsOut(IOutrunAMMRouter(router2).factory(), borrowAmount, swapPath);
         console2.log("amounts[0]", amounts[0], "amounts[1]", amounts[1]);
 
 
         IERC20(tokenBorrow).approve(router2, type(uint256).max);
-        IOutswapV1Router(router2).swapExactTokensForTokens(borrowAmount, 0, swapPath, address(this), block.timestamp);
+        IOutrunAMMRouter(router2).swapExactTokensForTokens(borrowAmount, 0, swapPath, address(this), block.timestamp);
 
         // 还t1
         (swapPath[0], swapPath[1]) = (tokenRevenue, tokenBorrow);
-        amounts = OutswapV1Library01.getAmountsIn(IOutswapV1Router(router1).factory(), borrowAmount, swapPath);
+        amounts = OutrunAMMLibrary01.getAmountsIn(IOutrunAMMRouter(router1).factory(), borrowAmount, swapPath);
         IERC20(tokenRevenue).transfer(pair1, amounts[0]);
 
         emit Repay(tokenRevenue, amounts[0]);

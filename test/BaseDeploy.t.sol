@@ -3,31 +3,31 @@ pragma solidity ^0.8.24;
 pragma abicoder v2;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {OutswapV1Library01} from 'src/libraries/OutswapV1Library01.sol';
+import {OutrunAMMLibrary01} from 'src/libraries/OutrunAMMLibrary01.sol';
 
 import {TestERC20} from "./utils/TestERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IORUSD} from "./interfaces/IORUSD.sol";
 import {IORETH} from "./interfaces/IORETH.sol";
 import {IUSDB} from "./interfaces/IUSDB.sol";
-import {IOutswapV1Factory} from "src/core/interfaces/IOutswapV1Factory.sol";
-import {IOutswapV1Router} from "src/router/interfaces/IOutswapV1Router.sol";
-import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
+import {IOutrunAMMFactory} from "src/core/interfaces/IOutrunAMMFactory.sol";
+import {IOutrunAMMRouter} from "src/router/interfaces/IOutrunAMMRouter.sol";
+import {IOutrunAMMPair} from "src/core/interfaces/IOutrunAMMPair.sol";
 
 string constant ORETHAtricle = "test/utils/ORETH.json";
 string constant ORUSDAtricle = "test/utils/ORUSD.json";
-string constant factoryAtricle = "out/OutswapV1Factory.sol/OutswapV1Factory.json";
-string constant routerAtricle = "out/OutswapV1Router.sol/OutswapV1Router.json";
+string constant factoryAtricle = "out/OutrunAMMFactory.sol/OutrunAMMFactory.json";
+string constant routerAtricle = "out/OutrunAMMRouter.sol/OutrunAMMRouter.json";
 
 contract BaseDeploy is Test {
     
     address public deployer = vm.envAddress("LOCAL_DEPLOYER");
 
-    address OutswapV1Factory = 0x3cEca1C6e131255e7C95788D40581934E84A1F9d;
-    address OutswapV1Router = 0xd48CA5f376A9abbee74997c226a55D71b4168790;
+    address OutrunAMMFactory = 0x3cEca1C6e131255e7C95788D40581934E84A1F9d;
+    address OutrunAMMRouter = 0xd48CA5f376A9abbee74997c226a55D71b4168790;
 
-    IOutswapV1Factory public poolFactory = IOutswapV1Factory(OutswapV1Factory);
-    IOutswapV1Router public swapRouter = IOutswapV1Router(OutswapV1Router);
+    IOutrunAMMFactory public poolFactory = IOutrunAMMFactory(OutrunAMMFactory);
+    IOutrunAMMRouter public swapRouter = IOutrunAMMRouter(OutrunAMMRouter);
 
     address public ORETH = 0x4E06Dc746f8d3AB15BC7522E2B3A1ED087F14617;
     IORETH public reth = IORETH(ORETH);
@@ -48,8 +48,8 @@ contract BaseDeploy is Test {
         uint256 forkId = vm.createFork("blast_sepolia");
         vm.selectFork(forkId);
 
-        vm.label(OutswapV1Factory, "OutswapV1Factory");
-        vm.label(OutswapV1Router, "OutswapV1Router");
+        vm.label(OutrunAMMFactory, "OutrunAMMFactory");
+        vm.label(OutrunAMMRouter, "OutrunAMMRouter");
         vm.label(ORETH, "ORETH");
         vm.label(ORUSD, "ORUSD");
         vm.label(USDB, "USDB");
@@ -74,7 +74,7 @@ contract BaseDeploy is Test {
     /* FUNCTION */
     /* ENV CONFIG */
     function getINIT_CODEJson() internal view {
-        bytes memory bytecode = abi.encodePacked(vm.getCode("OutswapV1Pair.sol:OutswapV1Pair"));
+        bytes memory bytecode = abi.encodePacked(vm.getCode("OutrunAMMPair.sol:OutrunAMMPair"));
         console2.logBytes32(keccak256(bytecode));
     }
 
@@ -89,10 +89,10 @@ contract BaseDeploy is Test {
         IORETH(payable(ORETH)).deposit{value: 100 ether}();
 
         address factory = deployCode(factoryAtricle, abi.encode(deployer));
-        poolFactory = IOutswapV1Factory(factory);
+        poolFactory = IOutrunAMMFactory(factory);
 
         address router = deployCode(routerAtricle, abi.encode(address(poolFactory), ORETH, ORUSD, USDB));
-        swapRouter = IOutswapV1Router(router);
+        swapRouter = IOutrunAMMRouter(router);
     }
 
     function getToken(uint256 tokenNumber) internal {
@@ -120,14 +120,14 @@ contract BaseDeploy is Test {
         (tokenA, tokenB, amount0, amount1) =
             tokenA < tokenB ? (tokenA, tokenB, amount0, amount1) : (tokenB, tokenA, amount1, amount0);
 
-        return IOutswapV1Router(router).addLiquidity(
+        return IOutrunAMMRouter(router).addLiquidity(
             tokenA, tokenB, amount0, amount1, 0, 0, deployer, block.timestamp + 1 days
         );
     }
 
     function addLiquidityTokenAndUSDB(address token, uint256 tokenAmount, uint256 usdbAmount, address recipet) internal virtual returns (uint256 amount0, uint256 amount1, uint256 liquidity, address pair) {
-        (address _token0, address _token1) = OutswapV1Library01.sortTokens(token, ORUSD);
-        pair = OutswapV1Library01.pairFor(
+        (address _token0, address _token1) = OutrunAMMLibrary01.sortTokens(token, ORUSD);
+        pair = OutrunAMMLibrary01.pairFor(
             address(poolFactory),
             _token0,
             _token1
@@ -164,8 +164,8 @@ contract BaseDeploy is Test {
 
     /* REMOVE LIQUIDITY */
     function removeLiquidityTokenAndUSDB(address token, uint256 amount, address recipet) internal virtual {
-        (address _token0, address _token1) = OutswapV1Library01.sortTokens(token, ORUSD);
-        address pair = OutswapV1Library01.pairFor(address(poolFactory), _token0, _token1 );
+        (address _token0, address _token1) = OutrunAMMLibrary01.sortTokens(token, ORUSD);
+        address pair = OutrunAMMLibrary01.pairFor(address(poolFactory), _token0, _token1 );
 
         IERC20(pair).approve(address(swapRouter), amount);
         if(token != ORETH) {

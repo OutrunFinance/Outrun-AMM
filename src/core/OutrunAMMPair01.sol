@@ -4,18 +4,18 @@ pragma solidity ^0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "./OutswapV1ERC20.sol";
-import "./interfaces/IOutswapV1Pair.sol";
-import "./interfaces/IOutswapV1Factory.sol";
-import "./interfaces/IOutswapV1Callee.sol";
+import "./OutrunAMMERC20.sol";
+import "./interfaces/IOutrunAMMPair.sol";
+import "./interfaces/IOutrunAMMFactory.sol";
+import "./interfaces/IOutrunAMMCallee.sol";
 import "../libraries/UQ112x112.sol";
 import "../libraries/FixedPoint128.sol";
 import "../blast/GasManagerable.sol";
 
 /**
- * @title OutswapV1Pair01 - Pair fee 0.3%
+ * @title OutrunAMMPair01 - Pair fee 0.3%
  */
-contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
+contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20, GasManagerable {
     using UQ112x112 for uint224;
 
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
@@ -167,7 +167,7 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
 
             if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out);
             if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out);
-            if (data.length > 0) IOutswapV1Callee(to).OutswapV1Call(msg.sender, amount0Out, amount1Out, data);
+            if (data.length > 0) IOutrunAMMCallee(to).OutrunAMMCall(msg.sender, amount0Out, amount1Out, data);
             balance0 = IERC20(_token0).balanceOf(address(this));
             balance1 = IERC20(_token1).balanceOf(address(this));
         }
@@ -366,6 +366,6 @@ contract OutswapV1Pair01 is IOutswapV1Pair, OutswapV1ERC20, GasManagerable {
     }
 
     function _feeTo() internal view returns (address) {
-        return IOutswapV1Factory(factory).feeTo();
+        return IOutrunAMMFactory(factory).feeTo();
     }
 }

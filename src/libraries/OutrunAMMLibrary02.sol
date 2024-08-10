@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "../core/interfaces/IOutswapV1Pair.sol";
+import "../core/interfaces/IOutrunAMMPair.sol";
 
 /**
- * @dev For OutswapV1Pair01
+ * @dev For OutrunAMMPair02
  */
-library OutswapV1Library01 {
+library OutrunAMMLibrary02 {
     error ZeroAddress();
 
     error InvalidPath();
@@ -39,8 +39,8 @@ library OutswapV1Library01 {
                             hex"ff",
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-                            /* bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(OutswapV1Pair01).creationCode, abi.encode(gasManager))); */
-                            hex"484ae7d9b096a8b3e29dfdd817bcb852e6247163a8dcf1d7a772e88b7e68e13e" // 0.3% init code hash
+                            /* bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(OutrunAMMPair02).creationCode, abi.encode(gasManager))); */
+                            hex"32048344e03cb0216d27b35afd5f3433cfaa5fe85288f7796b3727b248b7bc1c" // 0.3% init code hash
                         )
                     )
                 )
@@ -55,7 +55,7 @@ library OutswapV1Library01 {
         address tokenB
     ) internal view returns (uint256 reserveA, uint256 reserveB) {
         (address token0,) = sortTokens(tokenA, tokenB);
-        (uint256 reserve0, uint256 reserve1,) = IOutswapV1Pair(pairFor(factory, tokenA, tokenB)).getReserves();
+        (uint256 reserve0, uint256 reserve1,) = IOutrunAMMPair(pairFor(factory, tokenA, tokenB)).getReserves();
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
     }
 
@@ -70,7 +70,7 @@ library OutswapV1Library01 {
     function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) internal pure returns (uint256 amountOut) {
         require(amountIn > 0, InsufficientInputAmount());
         require(reserveIn > 0 && reserveOut > 0, InsufficientLiquidity());
-        uint256 amountInWithFee = amountIn * 997;
+        uint256 amountInWithFee = amountIn * 990;
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
         amountOut = numerator / denominator;
@@ -81,7 +81,7 @@ library OutswapV1Library01 {
         require(amountOut > 0, InsufficientOutputAmount());
         require(reserveIn > 0 && reserveOut > 0, InsufficientLiquidity());
         uint256 numerator = reserveIn * amountOut * 1000;
-        uint256 denominator = (reserveOut - amountOut) * 997;
+        uint256 denominator = (reserveOut - amountOut) * 990;
         amountIn = (numerator / denominator) + 1;
     }
 

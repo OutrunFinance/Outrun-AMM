@@ -2,22 +2,22 @@
 pragma solidity ^0.8.24;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {IOutswapV1Router} from "src/router/interfaces/IOutswapV1Router.sol";
+import {IOutrunAMMRouter} from "src/router/interfaces/IOutrunAMMRouter.sol";
 
 contract SwapTest is Test {
     address internal sender;
     address internal orETH;
     address internal orUSD;
-    IOutswapV1Router internal swapRouter;
+    IOutrunAMMRouter internal swapRouter;
 
     function setUp() public {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         sender = vm.rememberKey(privateKey);
 
-        address OutswapV1Router = 0x4d821974783d88E4996241EcbBf62935180941a8;
+        address OutrunAMMRouter = 0x4d821974783d88E4996241EcbBf62935180941a8;
         orETH = 0xF62f5dB01cb60d80219F478D5CDffB6398Cee9A5;
         orUSD = 0xe04b19ed724A328C804e82e7196dcef18570bfae;
-        swapRouter = IOutswapV1Router(OutswapV1Router);
+        swapRouter = IOutrunAMMRouter(OutrunAMMRouter);
         vm.startBroadcast(sender);
         vm.stopBroadcast();
     }

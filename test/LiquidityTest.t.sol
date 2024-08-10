@@ -102,7 +102,7 @@ contract liquidityTest is BaseDeploy {
                 tokens[0], liquidity / 2, 0, 0, deployer, block.timestamp + 1 days
             );
 
-            vm.startPrank(IOwnable(OutswapV1Factory).owner());
+            vm.startPrank(IOwnable(OutrunAMMFactory).owner());
             poolFactory.setFeeTo(deployer);
             vm.stopPrank();
 

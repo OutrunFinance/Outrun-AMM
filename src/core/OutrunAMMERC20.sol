@@ -4,9 +4,9 @@ pragma solidity ^0.8.26;
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
-import "./interfaces/IOutswapV1ERC20.sol";
+import "./interfaces/IOutrunAMMERC20.sol";
 
-abstract contract OutswapV1ERC20 is EIP712, IOutswapV1ERC20 {
+abstract contract OutrunAMMERC20 is EIP712, IOutrunAMMERC20 {
     bytes32 public constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
     string public constant name = "Outswap V1";

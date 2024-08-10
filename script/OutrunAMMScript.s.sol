@@ -2,17 +2,17 @@
 pragma solidity ^0.8.24;
 
 import "./BaseScript.s.sol";
-import "../src/core/OutswapV1ERC20.sol";
-import "../src/core/OutswapV1Pair01.sol";
-import "../src/core/OutswapV1Pair02.sol";
-import "../src/core/OutswapV1Factory01.sol";
-import "../src/core/OutswapV1Factory02.sol";
-import "../src/router/OutswapV1Router01.sol";
-import "../src/router/OutswapV1Router02.sol";
+import "../src/core/OutrunAMMERC20.sol";
+import "../src/core/OutrunAMMPair01.sol";
+import "../src/core/OutrunAMMPair02.sol";
+import "../src/core/OutrunAMMFactory01.sol";
+import "../src/core/OutrunAMMFactory02.sol";
+import "../src/router/OutrunAMMRouter01.sol";
+import "../src/router/OutrunAMMRouter02.sol";
 import "../src/referral/ReferralManager.sol";
 import "../src/router/OutrunMulticall.sol";
 
-contract OutswapV1Script is BaseScript {
+contract OutrunAMMScript is BaseScript {
     address internal orETH;
     address internal orUSD;
     address internal USDB;
@@ -23,8 +23,8 @@ contract OutswapV1Script is BaseScript {
     address internal signer;
     address internal referralManager;
 
-    OutswapV1Factory01 internal factory01;
-    OutswapV1Factory02 internal factory02;
+    OutrunAMMFactory01 internal factory01;
+    OutrunAMMFactory02 internal factory02;
 
     function run() public broadcaster {
         orETH = vm.envAddress("ORETH");
@@ -37,10 +37,10 @@ contract OutswapV1Script is BaseScript {
         signer = vm.envAddress("SIGNER");
         
         // console.log("0.3% Fee Pair initcode:");
-        // console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair01).creationCode, abi.encode(gasManager))));
+        // console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair01).creationCode, abi.encode(gasManager))));
 
         // console.log("1% Fee Pair initcode:");
-        // console.logBytes32(keccak256(abi.encodePacked(type(OutswapV1Pair02).creationCode, abi.encode(gasManager))));
+        // console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair02).creationCode, abi.encode(gasManager))));
 
         // // ReferralManager
         // referralManager = address(new ReferralManager(registrar, gasManager, signer));
@@ -50,26 +50,26 @@ contract OutswapV1Script is BaseScript {
         // address multicall = address(new OutrunMulticall(gasManager));
         // console.log("OutrunMulticall deployed on %s", multicall);
 
-        // // OutswapV1Factory01
-        // factory01 = new OutswapV1Factory01(owner, gasManager);
+        // // OutrunAMMFactory01
+        // factory01 = new OutrunAMMFactory01(owner, gasManager);
         // factory01.setFeeTo(feeTo);
         // address factory01Addr = address(factory01);
-        // console.log("OutswapV1Factory01 deployed on %s", factory01Addr);
+        // console.log("OutrunAMMFactory01 deployed on %s", factory01Addr);
 
-        // // OutswapV1Factory02
-        // factory02 = new OutswapV1Factory02(owner, gasManager);
+        // // OutrunAMMFactory02
+        // factory02 = new OutrunAMMFactory02(owner, gasManager);
         // factory02.setFeeTo(feeTo);
         // address factory02Addr = address(factory02);
-        // console.log("OutswapV1Factory02 deployed on %s", factory02Addr);
+        // console.log("OutrunAMMFactory02 deployed on %s", factory02Addr);
 
-        // OutswapV1Router01
-        // OutswapV1Router01 router01 = new OutswapV1Router01(0x73249d1DF1434228693Cce32C2b97EE5BD464220, orETH, orUSD, USDB, 0xC227bA17a4bF33945eBD9B9CCa6b2039d8095b41, gasManager);
+        // OutrunAMMRouter01
+        // OutrunAMMRouter01 router01 = new OutrunAMMRouter01(0x73249d1DF1434228693Cce32C2b97EE5BD464220, orETH, orUSD, USDB, 0xC227bA17a4bF33945eBD9B9CCa6b2039d8095b41, gasManager);
         // address router01Addr = address(router01);
-        // console.log("OutswapV1Router01 deployed on %s", router01Addr);
+        // console.log("OutrunAMMRouter01 deployed on %s", router01Addr);
 
-        // OutswapV1Router02
-        OutswapV1Router02 router02 = new OutswapV1Router02(0x5E53a7C3753B46BE021848c62274FEeAf28A349e, orETH, orUSD, USDB, 0xC227bA17a4bF33945eBD9B9CCa6b2039d8095b41, gasManager);
+        // OutrunAMMRouter02
+        OutrunAMMRouter02 router02 = new OutrunAMMRouter02(0x5E53a7C3753B46BE021848c62274FEeAf28A349e, orETH, orUSD, USDB, 0xC227bA17a4bF33945eBD9B9CCa6b2039d8095b41, gasManager);
         address router02Addr = address(router02);
-        console.log("OutswapV1Router02 deployed on %s", router02Addr);
+        console.log("OutrunAMMRouter02 deployed on %s", router02Addr);
     }
 }

@@ -5,9 +5,9 @@
 // import {BaseDeploy} from "./BaseDeploy.t.sol";
 // import {console2} from "forge-std/Test.sol";
 
-// import {OutswapV1Library01} from 'src/libraries/OutswapV1Library01.sol';
+// import {OutrunAMMLibrary01} from 'src/libraries/OutrunAMMLibrary01.sol';
 // import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// import {IOutswapV1Pair} from "src/core/interfaces/IOutswapV1Pair.sol";
+// import {IOutrunAMMPair} from "src/core/interfaces/IOutrunAMMPair.sol";
 // import "@openzeppelin/contracts/utils/math/Math.sol";
 
 // contract ACCUMFEEMOCK is BaseDeploy {
@@ -34,7 +34,7 @@
 
 //         totalSupply = IERC20(tokenPair).totalSupply();
 //         accumFeePerLP = IAccumFeePerLP(tokenPair).accumFeePerLP();
-//         kLast = IOutswapV1Pair(tokenPair).kLast();
+//         kLast = IOutrunAMMPair(tokenPair).kLast();
 
 //         assert(totalSupply > 5 ether);
 //         assertEq(accumFeePerLP, 0);
@@ -50,12 +50,12 @@
 //         uint256 totoalAmount = totalSupply + 1 ether;
 
 //         vm.startPrank(deployer);
-//         uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, totoalAmount, tokenToUsdPath);
+//         uint256[] memory amountsCal = OutrunAMMLibrary01.getAmountsIn(OutrunAMMFactory, totoalAmount, tokenToUsdPath);
 //         IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-//         IOutswapV1Pair(tokenPair).swap(0, totoalAmount, address(this), address(this), "");
+//         IOutrunAMMPair(tokenPair).swap(0, totoalAmount, address(this), address(this), "");
 //         vm.stopPrank();
 
-//         (reserve0, reserve1, ) = IOutswapV1Pair(tokenPair).getReserves();
+//         (reserve0, reserve1, ) = IOutrunAMMPair(tokenPair).getReserves();
 //         uint256 k = uint256(reserve0) * uint256(reserve1);
 
 //         accumFeePerLP = _accumulate(Math.sqrt(k), Math.sqrt(kLast));
@@ -71,9 +71,9 @@
 //         vm.startPrank(deployer);
         
 //         for (int i = 0; i < 10; i++){
-//             uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
+//             uint256[] memory amountsCal = OutrunAMMLibrary01.getAmountsIn(OutrunAMMFactory, amountOut, tokenToUsdPath);
 //             IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-//             IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), address(this), "");
+//             IOutrunAMMPair(tokenPair).swap(0, amountOut, address(this), address(this), "");
 
 //             accumFeePerLP = IAccumFeePerLP(tokenPair).accumFeePerLP();
 //             assertEq(accumFeePerLP, 0);
@@ -89,9 +89,9 @@
 //         vm.assume(amountOut > 0 && amountOut < 7.5 ether); // < 7.5 防止溢出
 
 //         vm.startPrank(deployer);
-//         uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
+//         uint256[] memory amountsCal = OutrunAMMLibrary01.getAmountsIn(OutrunAMMFactory, amountOut, tokenToUsdPath);
 //         IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-//         IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), address(this), "");
+//         IOutrunAMMPair(tokenPair).swap(0, amountOut, address(this), address(this), "");
 //         vm.stopPrank();
 
 //         accumFeePerLP = IAccumFeePerLP(tokenPair).accumFeePerLP();
@@ -103,9 +103,9 @@
 //         uint256 amountOut = totalSupply;
 
 //         vm.startPrank(deployer);
-//         uint256[] memory amountsCal = OutswapV1Library01.getAmountsIn(OutswapV1Factory, amountOut, tokenToUsdPath);
+//         uint256[] memory amountsCal = OutrunAMMLibrary01.getAmountsIn(OutrunAMMFactory, amountOut, tokenToUsdPath);
 //         IERC20(tokenToUsdPath[0]).transfer(tokenPair, amountsCal[0]);
-//         IOutswapV1Pair(tokenPair).swap(0, amountOut, address(this), address(this), "");
+//         IOutrunAMMPair(tokenPair).swap(0, amountOut, address(this), address(this), "");
 //         vm.stopPrank();
 
 //         accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
@@ -134,7 +134,7 @@
 
 //     //     vm.startPrank(deployer);
 //     //     for (int i = 0; i < 10; i++){
-//     //         kLast = IOutswapV1Pair(tokenPair).kLast();
+//     //         kLast = IOutrunAMMPair(tokenPair).kLast();
 //     //         IERC20(tokenToUsdPath[0]).approve(address(swapRouter), amountIn);
 //     //         swapRouter.swapExactTokensForUSDB(amountIn, 0, tokenToUsdPath, address(this), block.timestamp);
 //     //         accumFeePerLP = get_accumFeePerLP(accumFeePerLP);
@@ -149,14 +149,14 @@
 //     // }
 
 //     // function get_accumFeePerLP(uint256 accumFeePerLPNow) public returns (uint256) {
-//     //     (uint112 reserve0, uint112 reserve1, ) = IOutswapV1Pair(tokenPair).getReserves();
+//     //     (uint112 reserve0, uint112 reserve1, ) = IOutrunAMMPair(tokenPair).getReserves();
 //     //     uint256 k = uint256(reserve0) * uint256(reserve1);
 //     //     return _accumulate_update(Math.sqrt(k), Math.sqrt(kLast));
 //     // }
 
 //     // function _accumulate_update(uint256 rootK, uint256 rootKLast) internal  returns (uint256) {
 //     //     // emit log_named_decimal_uint("(rootK - rootKLast):", (rootK - rootKLast), 18);
-//     //     // emit log_named_decimal_uint("OutswapV1Pair", totalSupply, 18);
+//     //     // emit log_named_decimal_uint("OutrunAMMPair", totalSupply, 18);
 //     //     return accumFeePerLP + FullMath.mulDiv(rootK - rootKLast, Q128, totalSupply);
 //     // }
 
@@ -171,7 +171,7 @@
 
 //     function _accumulate(uint256 rootK, uint256 rootKLast) internal  returns (uint256) {
 //         emit log_named_decimal_uint("(rootK - rootKLast):", (rootK - rootKLast), 18);
-//         emit log_named_decimal_uint("OutswapV1Pair", totalSupply, 18);
+//         emit log_named_decimal_uint("OutrunAMMPair", totalSupply, 18);
 //         return accumFeePerLP + ((rootK - rootKLast) / totalSupply);
 //     }
 // }

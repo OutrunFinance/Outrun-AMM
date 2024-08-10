@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-interface IOutswapV1Pair {
+interface IOutrunAMMPair {
     function MINIMUM_LIQUIDITY() external pure returns (uint256);
 
     function factory() external view returns (address);
