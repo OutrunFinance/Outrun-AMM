@@ -8,7 +8,7 @@ Outrun AMM is built on classic AMM and includes several innovative improvements.
 
 + **Separation of Liquidity and Market-Making Fees**: Outrun AMM improves the management of market-making fees by separating liquidity from fee collection. This allows users to collect fees without removing liquidity, providing greater flexibility and convenience for liquidity providers.
 
-+ **New Fee Tiers**: All Uniswap v2 pools have a fixed swap fee of 0.3%, which results in a lack of flexibility for LPs (liquidity providers) who cannot seek different fee structures based on the assets they provide to the exchange. Outrun AMM will introduce new fee tiers for pool creators, allowing them to build different trading pools for various types of assets when launching pools on Outrun AMM.
++ **New Fee Tiers**: All classic AMM pools have a fixed swap fee of 0.3%, which results in a lack of flexibility for LPs (liquidity providers) who cannot seek different fee structures based on the assets they provide to the exchange. Outrun AMM will introduce new fee tiers for pool creators, allowing them to build different trading pools for various types of assets when launching pools on Outrun AMM.
 
 + **Referral Commission Engine**: Outrun AMM is currently the only automated market maker on the market integrated with a referral commission engine. We have redesigned the underlying code and opened the referral bonus engine to everyone, thereby increasing the composability of the protocol. The rewards for the referral bonus come from the protocol fees and do not harm the interests of LPs. At the same time, this attracts more transactions, bringing higher income to LPs.
 
@@ -32,7 +32,7 @@ We analyzed the historical trading data of most concentrated liquidity AMMs on t
 + Concentrated liquidity AMMs have high market-making thresholds, and new protocols lack a large number of mainstream assets, making it difficult to accumulate Total Value Locked (TVL) for the protocol.
 + New assets face the problem of liquidity fragmentation on centralized liquidity AMMs. New assets often experience significant volatility, making it difficult to determine upper and lower price boundaries. This volatility can lead to sudden liquidity collapses, negatively impacting the project.
 
-Therefore, the initial version of Outswap—Outrun AMM, is built based on the design philosophy of classic AMM. Only after Outrun AMM has gained sufficient liquidity will we launch the concentrated liquidity AMM version—**Outrun CLAMM**.
+Therefore, the initial version of Outswap — Outrun AMM, is built based on the design philosophy of classic AMM. Only after Outrun AMM has gained sufficient liquidity will we launch the concentrated liquidity AMM version — **Outrun CLAMM**.
 
 ## Referral Commission Engine
 
