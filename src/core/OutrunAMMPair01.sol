@@ -179,7 +179,7 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20, GasManagerable {
             amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         }
         require(amount0In > 0 || amount1In > 0, InsufficientInputAmount());
-
+    
         uint256 rebateFee0;
         uint256 rebateFee1;
         uint256 protocolFee0;
@@ -195,45 +195,8 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20, GasManagerable {
             );
 
             address feeTo = _feeTo();
-            if (referrer == address(0)) {
-                // 0.3% * 30% as protocolFee
-                if (amount0In > 0) {
-                    protocolFee0 = amount0In * 9 / 10000;
-                    unchecked {
-                        balance0 -= protocolFee0;
-                    }
-                    _safeTransfer(_token0, feeTo, protocolFee0);
-                }
-                
-                if (amount1In > 0) {
-                    protocolFee1 = amount1In * 9 / 10000;
-                    unchecked {
-                        balance1 -= protocolFee1;
-                    }
-                    _safeTransfer(_token1, feeTo, protocolFee1);
-                }
-            } else {
-                // 0.3% * 30% * 20% as rebateFee, 0.3% * 30% * 80% as protocolFee
-                if (amount0In > 0) {
-                    rebateFee0 = amount0In * 9 / 50000;
-                    protocolFee0 = amount0In * 9 / 12500;
-                    unchecked {
-                        balance0 -= rebateFee0 + protocolFee0; 
-                    }
-                    _safeTransfer(_token0, referrer, rebateFee0);
-                    _safeTransfer(_token0, feeTo, protocolFee0);
-                }
-                
-                if (amount1In > 0) {
-                    rebateFee1 = amount1In * 9 / 50000;
-                    protocolFee1 = amount1In * 9 / 12500;
-                    unchecked {
-                        balance1 -= rebateFee1 + protocolFee1;     
-                    }
-                    _safeTransfer(_token1, referrer, rebateFee1);
-                    _safeTransfer(_token1, feeTo, protocolFee1);
-                }
-            }
+            (balance0, rebateFee0, protocolFee0) = _transferRebateAndProtocolFee(amount0In, balance0, _token0, referrer, feeTo);
+            (balance1, rebateFee1, protocolFee1) = _transferRebateAndProtocolFee(amount1In, balance1, _token1, referrer, feeTo);
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -348,7 +311,38 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20, GasManagerable {
         reserve0 = uint112(balance0);
         reserve1 = uint112(balance1);
         blockTimestampLast = blockTimestamp;
+
         emit Sync(reserve0, reserve1);
+    }
+
+    /**
+     * @dev Transfer rebate and protocol fee
+     */
+    function _transferRebateAndProtocolFee(
+        uint256 amountIn,
+        uint256 balance,
+        address token,
+        address referrer,
+        address feeTo
+    ) internal returns(uint256 balanceAfter, uint256 rebateFee, uint256 protocolFee) {
+        if (amountIn == 0 || feeTo == address(0)) {
+            return (balance, 0, 0);
+        }
+
+        if (referrer == address(0)) {
+            // 0.3% * 30% as protocolFee
+            rebateFee = 0;
+            protocolFee = amountIn * 9 / 10000;
+            balance -= protocolFee;
+            _safeTransfer(token, feeTo, protocolFee);
+        } else {
+            // 0.3% * 30% * 20% as rebateFee, 0.3% * 30% * 80% as protocolFee
+            rebateFee = amountIn * 9 / 50000;
+            protocolFee = amountIn * 9 / 12500;
+            balance -= rebateFee + protocolFee;
+            _safeTransfer(token, referrer, rebateFee);
+            _safeTransfer(token, feeTo, protocolFee);
+        }
     }
 
     /**
