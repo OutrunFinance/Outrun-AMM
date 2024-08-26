@@ -4,20 +4,16 @@ pragma solidity ^0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interfaces/IOutrunAMMRouter.sol";
-import "./interfaces/IORETH.sol";
-import "./interfaces/IORUSD.sol";
+import "./interfaces/IWETH.sol";
 import "../libraries/TransferHelper.sol";
 import "../libraries/OutrunAMMLibrary01.sol";
 import "../core/interfaces/IOutrunAMMERC20.sol";
 import "../core/interfaces/IOutrunAMMFactory.sol";
-import "../blast/GasManagerable.sol";
 import "../referral/interfaces/IReferralManager.sol";
 
-contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
+contract OutrunAMMRouter01 is IOutrunAMMRouter {
     address public immutable override factory;
-    address public immutable ORETH;
-    address public immutable ORUSD;
-    address public immutable USDB;
+    address public immutable WETH;
     address public immutable referralManager;
 
     modifier ensure(uint256 deadline) {
@@ -25,25 +21,15 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         _;
     }
 
-    constructor(
-        address _factory, 
-        address _orETH, 
-        address _orUSD, 
-        address _usdb, 
-        address _referralManager,
-        address _gasManager
-    ) GasManagerable(_gasManager) {
+    constructor(address _factory, address _WETH, address _referralManager) {
         factory = _factory;
-        ORETH = _orETH;
-        ORUSD = _orUSD;
-        USDB = _usdb;
+        WETH = _WETH;
         referralManager = _referralManager;
-        IERC20(_usdb).approve(_orUSD, type(uint256).max);
     }
 
     receive() external payable {
-        // only accept ETH via fallback from the ORETH contract
-        require(msg.sender == ORETH, InvaildETHSender());
+        // only accept ETH via fallback from the WETH contract
+        require(msg.sender == WETH, InvaildETHSender());
     }
 
     /**
@@ -103,48 +89,11 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH, uint256 liquidity) {
-        (amountToken, amountETH) = _addLiquidity(token, ORETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
-        address pair = OutrunAMMLibrary01.pairFor(factory, token, ORETH);
+        (amountToken, amountETH) = _addLiquidity(token, WETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
+        address pair = OutrunAMMLibrary01.pairFor(factory, token, WETH);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
-        IORETH(ORETH).deposit{value: amountETH}();
-        assert(IORETH(ORETH).transfer(pair, amountETH));
-        liquidity = IOutrunAMMPair(pair).mint(to);
-        // refund dust eth, if any
-        if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
-    }
-
-    function addLiquidityUSDB(
-        address token,
-        uint256 amountTokenDesired,
-        uint256 amountUSDBDesired,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) external payable virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountUSDB, uint256 liquidity) {
-        (amountToken, amountUSDB) = _addLiquidity(token, ORUSD, amountTokenDesired, amountUSDBDesired, amountTokenMin, amountUSDBMin);
-        address pair = OutrunAMMLibrary01.pairFor(factory, token, ORUSD);
-        TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
-        TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amountUSDB);
-        IORUSD(ORUSD).deposit(amountUSDB);
-        assert(IORUSD(ORUSD).transfer(pair, amountUSDB));
-        liquidity = IOutrunAMMPair(pair).mint(to);
-    }
-
-    function addLiquidityETHAndUSDB(
-        uint256 amountUSDBDesired,
-        uint256 amountETHMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) external payable virtual override ensure(deadline) returns (uint256 amountETH, uint256 amountUSDB, uint256 liquidity) {
-        (amountETH, amountUSDB) = _addLiquidity(ORETH, ORUSD, msg.value, amountUSDBDesired, amountETHMin, amountUSDBMin);
-        address pair = OutrunAMMLibrary01.pairFor(factory, ORETH, ORUSD);
-        IORETH(ORETH).deposit{value: amountETH}();
-        assert(IORETH(ORETH).transfer(pair, amountETH));
-        TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amountUSDB);
-        IORUSD(ORUSD).deposit(amountUSDB);
-        assert(IORUSD(ORUSD).transfer(pair, amountUSDB));
+        IWETH(WETH).deposit{value: amountETH}();
+        assert(IWETH(WETH).transfer(pair, amountETH));
         liquidity = IOutrunAMMPair(pair).mint(to);
         // refund dust eth, if any
         if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
@@ -177,38 +126,10 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         address to,
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
-        (amountToken, amountETH) = removeLiquidity(token, ORETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
+        (amountToken, amountETH) = removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
         TransferHelper.safeTransfer(token, to, amountToken);
-        IORETH(ORETH).withdraw(amountETH);
+        IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
-    }
-
-    function removeLiquidityUSDB(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) public virtual override ensure(deadline) returns (uint256 amountToken, uint256 amountUSDB) {
-        (amountToken, amountUSDB) = removeLiquidity(token, ORUSD, liquidity, amountTokenMin, amountUSDBMin, address(this), deadline);
-        TransferHelper.safeTransfer(token, to, amountToken);
-        IORUSD(ORUSD).withdraw(amountUSDB);
-        TransferHelper.safeTransfer(USDB, to, amountUSDB);
-    }
-
-    function removeLiquidityETHAndUSDB(
-        uint256 liquidity,
-        uint256 amountETHMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) public virtual override ensure(deadline) returns (uint256 amountETH, uint256 amountUSDB) {
-        (amountETH, amountUSDB) = removeLiquidity(ORETH, ORUSD, liquidity, amountETHMin, amountUSDBMin, address(this), deadline);
-        IORETH(ORETH).withdraw(amountETH);
-        TransferHelper.safeTransferETH(to, amountETH);
-        IORUSD(ORUSD).withdraw(amountUSDB);
-        TransferHelper.safeTransfer(USDB, to, amountUSDB);
     }
 
     function removeLiquidityWithPermit(
@@ -242,45 +163,10 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         bytes32 r,
         bytes32 s
     ) external virtual override returns (uint256 amountToken, uint256 amountETH) {
-        address pair = OutrunAMMLibrary01.pairFor(factory, token, ORETH);
+        address pair = OutrunAMMLibrary01.pairFor(factory, token, WETH);
         uint256 value = approveMax ? type(uint256).max : liquidity;
         IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
-    }
-
-    function removeLiquidityUSDBWithPermit(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external virtual override returns (uint256 amountToken, uint256 amountUSDB) {
-        address pair = OutrunAMMLibrary01.pairFor(factory, token, ORUSD);
-        uint256 value = approveMax ? type(uint256).max : liquidity;
-        IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        (amountToken, amountUSDB) = removeLiquidityUSDB(token, liquidity, amountTokenMin, amountUSDBMin, to, deadline);
-    }
-
-    function removeLiquidityETHAndUSDBWithPermit(
-        uint256 liquidity,
-        uint256 amountETHMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external virtual override returns (uint256 amountETH, uint256 amountUSDB) {
-        address pair = OutrunAMMLibrary01.pairFor(factory, ORETH, ORUSD);
-        uint256 value = approveMax ? type(uint256).max : liquidity;
-        IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        (amountETH, amountUSDB) = removeLiquidityETHAndUSDB(liquidity, amountETHMin, amountUSDBMin, to, deadline);
     }
 
     /**
@@ -294,9 +180,9 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         address to,
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountETH) {
-        (, amountETH) = removeLiquidity(token, ORETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
+        (, amountETH) = removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
         TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
-        IORETH(ORETH).withdraw(amountETH);
+        IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
 
@@ -312,45 +198,11 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         bytes32 r,
         bytes32 s
     ) external virtual override returns (uint256 amountETH) {
-        address pair = OutrunAMMLibrary01.pairFor(factory, token, ORETH);
+        address pair = OutrunAMMLibrary01.pairFor(factory, token, WETH);
         uint256 value = approveMax ? type(uint256).max : liquidity;
         IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
             token, liquidity, amountTokenMin, amountETHMin, to, deadline
-        );
-    }
-
-    function removeLiquidityUSDBSupportingFeeOnTransferTokens(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) public virtual override ensure(deadline) returns (uint256 amountUSDB) {
-        (, amountUSDB) = removeLiquidity(token, ORUSD, liquidity, amountTokenMin, amountUSDBMin, address(this), deadline);
-        TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
-        IORUSD(ORUSD).withdraw(amountUSDB);
-        TransferHelper.safeTransfer(USDB, to, amountUSDB);
-    }
-
-    function removeLiquidityUSDBWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external virtual override returns (uint256 amountUSDB) {
-        address pair = OutrunAMMLibrary01.pairFor(factory, token, ORUSD);
-        uint256 value = approveMax ? type(uint256).max : liquidity;
-        IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        amountUSDB = removeLiquidityUSDBSupportingFeeOnTransferTokens(
-            token, liquidity, amountTokenMin, amountUSDBMin, to, deadline
         );
     }
 
@@ -405,14 +257,14 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
     function swapExactETHForTokens(
         uint256 amountOutMin, 
         address[] calldata path, 
-        address to, 
+        address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH, InvalidPath());
+        require(path[0] == WETH, InvalidPath());
         amounts = OutrunAMMLibrary01.getAmountsOut(factory, msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
-        IORETH(ORETH).deposit{value: amounts[0]}();
-        assert(IORETH(ORETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
+        IWETH(WETH).deposit{value: amounts[0]}();
+        assert(IWETH(WETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
     }
 
@@ -423,14 +275,14 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORETH, InvalidPath());
+        require(path[path.length - 1] == WETH, InvalidPath());
         amounts = OutrunAMMLibrary01.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= amountInMax, ExcessiveInputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
-        IORETH(ORETH).withdraw(amounts[amounts.length - 1]);
+        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
@@ -441,170 +293,29 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORETH, InvalidPath());
+        require(path[path.length - 1] == WETH, InvalidPath());
         amounts = OutrunAMMLibrary01.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
-        IORETH(ORETH).withdraw(amounts[amounts.length - 1]);
+        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
     function swapETHForExactTokens(
         uint256 amountOut, 
         address[] calldata path, 
-        address to, 
+        address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH, InvalidPath());
+        require(path[0] == WETH, InvalidPath());
         amounts = OutrunAMMLibrary01.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= msg.value, ExcessiveInputAmount());
-        IORETH(ORETH).deposit{value: amounts[0]}();
-        assert(IORETH(ORETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
+        IWETH(WETH).deposit{value: amounts[0]}();
+        assert(IWETH(WETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
-        // refund dust eth, if any
-        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
-    }
-
-    function swapExactUSDBForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
-        TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
-        IORUSD(ORUSD).deposit(amounts[0]);
-        assert(IORUSD(ORUSD).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
-        _swap(amounts, path, to);
-    }
-
-    function swapTokensForExactUSDB(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORUSD, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
-        TransferHelper.safeTransferFrom(
-            path[0], msg.sender, OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]
-        );
-        _swap(amounts, path, address(this));
-        IORUSD(ORUSD).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransfer(USDB, to, amounts[amounts.length - 1]);
-    }
-
-    function swapExactTokensForUSDB(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == ORUSD, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
-        TransferHelper.safeTransferFrom(
-            path[0], msg.sender, OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]
-        );
-        _swap(amounts, path, address(this));
-        IORUSD(ORUSD).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransfer(USDB, to, amounts[amounts.length - 1]);
-    }
-
-    function swapUSDBForExactTokens(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
-        TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
-        IORUSD(ORUSD).deposit(amounts[0]);
-        assert(IORUSD(ORUSD).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
-        _swap(amounts, path, to);
-    }
-
-    /**
-     * SWAP with Pair(ETH, USDB) *
-     */
-    function swapExactETHForUSDB(
-        uint256 amountOutMin, 
-        address[] calldata path, 
-        address to, 
-        uint256 deadline
-    ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH && path[path.length - 1] == ORUSD, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsOut(factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
-        IORETH(ORETH).deposit{value: amounts[0]}();
-        assert(IORETH(ORETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
-        _swap(amounts, path, address(this));
-        IORUSD(ORUSD).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransfer(USDB, to, amounts[amounts.length - 1]);
-    }
-
-    function swapUSDBForExactETH(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD && path[path.length - 1] == ORETH, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, ExcessiveInputAmount());
-        TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
-        IORUSD(ORUSD).deposit(amounts[0]);
-        TransferHelper.safeTransfer(path[0], OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]);
-        _swap(amounts, path, address(this));
-        IORETH(ORETH).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
-    }
-
-    function swapExactUSDBForETH(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORUSD && path[path.length - 1] == ORETH, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
-        TransferHelper.safeTransferFrom(USDB, msg.sender, address(this), amounts[0]);
-        IORUSD(ORUSD).deposit(amounts[0]);
-        TransferHelper.safeTransfer(path[0], OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]);
-        _swap(amounts, path, address(this));
-        IORETH(ORETH).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
-    }
-
-    function swapETHForExactUSDB(
-        uint256 amountOut, 
-        address[] calldata path, 
-        address to, 
-        uint256 deadline
-    ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == ORETH && path[path.length - 1] == ORUSD, InvalidPath());
-        amounts = OutrunAMMLibrary01.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, ExcessiveInputAmount());
-        IORETH(ORETH).deposit{value: amounts[0]}();
-        assert(IORETH(ORETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amounts[0]));
-        _swap(amounts, path, address(this));
-        IORUSD(ORUSD).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransfer(USDB, to, amounts[amounts.length - 1]);
         // refund dust eth, if any
         if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
     }
@@ -658,10 +369,10 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         address to,
         uint256 deadline
     ) external payable virtual override ensure(deadline) {
-        require(path[0] == ORETH, InvalidPath());
+        require(path[0] == WETH, InvalidPath());
         uint256 amountIn = msg.value;
-        IORETH(ORETH).deposit{value: amountIn}();
-        assert(IORETH(ORETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amountIn));
+        IWETH(WETH).deposit{value: amountIn}();
+        assert(IWETH(WETH).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
@@ -677,51 +388,15 @@ contract OutrunAMMRouter01 is IOutrunAMMRouter, GasManagerable {
         address to,
         uint256 deadline
     ) external virtual override ensure(deadline) {
-        require(path[path.length - 1] == ORETH, InvalidPath());
+        require(path[path.length - 1] == WETH, InvalidPath());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
-        uint256 amountOut = IERC20(ORETH).balanceOf(address(this));
+        uint256 amountOut = IERC20(WETH).balanceOf(address(this));
         require(amountOut >= amountOutMin, InsufficientOutputAmount());
-        IORETH(ORETH).withdraw(amountOut);
+        IWETH(WETH).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
-    }
-
-    function swapExactUSDBForTokensSupportingFeeOnTransferTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) {
-        require(path[0] == ORUSD, InvalidPath());
-        IORUSD(ORUSD).deposit(amountIn);
-        assert(IORUSD(ORUSD).transfer(OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amountIn));
-        uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
-        _swapSupportingFeeOnTransferTokens(path, to);
-        require(
-            IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
-            InsufficientOutputAmount()
-        );
-    }
-
-    function swapExactTokensForUSDBSupportingFeeOnTransferTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external virtual override ensure(deadline) {
-        require(path[path.length - 1] == ORUSD, InvalidPath());
-        TransferHelper.safeTransferFrom(
-            path[0], msg.sender, OutrunAMMLibrary01.pairFor(factory, path[0], path[1]), amountIn
-        );
-        _swapSupportingFeeOnTransferTokens(path, address(this));
-        uint256 amountOut = IERC20(ORUSD).balanceOf(address(this));
-        require(amountOut >= amountOutMin, InsufficientOutputAmount());
-        IORUSD(ORUSD).withdraw(amountOut);
-        TransferHelper.safeTransfer(USDB, to, amountOut);
     }
 
     // **** LIBRARY FUNCTIONS ****

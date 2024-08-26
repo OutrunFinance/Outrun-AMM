@@ -9,7 +9,7 @@ import "./interfaces/IOutrunAMMERC20.sol";
 abstract contract OutrunAMMERC20 is EIP712, IOutrunAMMERC20 {
     bytes32 public constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
-    string public constant name = "Outswap V1";
+    string public constant name = "Outrun AMM";
     string public constant symbol = "OUT-V1";
     uint8 public constant decimals = 18;
     uint256 public totalSupply;

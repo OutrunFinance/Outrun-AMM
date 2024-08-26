@@ -1,9 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "../blast/GasManagerable.sol";
-
-contract OutrunMulticall is GasManagerable {
+contract OutrunMulticall {
     struct Call {
         address target;
         uint256 gasLimit;
@@ -16,7 +14,7 @@ contract OutrunMulticall is GasManagerable {
         bytes returnData;
     }
 
-    constructor(address _manager) GasManagerable(_manager) {}
+    constructor(address _manager) {}
 
     function getCurrentBlockTimestamp() public view returns (uint256 timestamp) {
         timestamp = block.timestamp;

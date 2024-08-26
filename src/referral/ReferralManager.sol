@@ -6,17 +6,16 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import "./interfaces/IReferralManager.sol";
-import "../blast/GasManagerable.sol";
 
 /**
  * @dev Referrer Manager, anyone can develop their own referrer manager and router contract to interface with Outrun AMM.
  */
-contract ReferralManager is IReferralManager, Ownable, GasManagerable {
+contract ReferralManager is IReferralManager, Ownable {
     address public signer;
 
     mapping(address account => address) private _referrers;
 
-    constructor(address _registrar, address _gasManager, address _signer) Ownable(_registrar) GasManagerable(_gasManager) {
+    constructor(address _registrar, address _signer) Ownable(_registrar) {
         signer = _signer;
     }
 

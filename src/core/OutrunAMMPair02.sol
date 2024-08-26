@@ -10,12 +10,11 @@ import "./interfaces/IOutrunAMMFactory.sol";
 import "./interfaces/IOutrunAMMCallee.sol";
 import "../libraries/UQ112x112.sol";
 import "../libraries/FixedPoint128.sol";
-import "../blast/GasManagerable.sol";
 
 /**
  * @title OutrunAMMPair02 - Pair fee 1%
  */
-contract OutrunAMMPair02 is IOutrunAMMPair, OutrunAMMERC20, GasManagerable {
+contract OutrunAMMPair02 is IOutrunAMMPair, OutrunAMMERC20 {
     using UQ112x112 for uint224;
 
     uint256 public constant MINIMUM_LIQUIDITY = 1000;
@@ -47,7 +46,7 @@ contract OutrunAMMPair02 is IOutrunAMMPair, OutrunAMMERC20, GasManagerable {
         unlocked = 1;
     }
 
-    constructor(address _gasManager) GasManagerable(_gasManager) {
+    constructor() {
         factory = msg.sender;
     }
 

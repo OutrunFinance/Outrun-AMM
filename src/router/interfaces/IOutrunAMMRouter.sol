@@ -4,12 +4,7 @@ pragma solidity ^0.8.26;
 interface IOutrunAMMRouter {
     function factory() external view returns (address);
 
-    function ORETH() external view returns (address);
-
-    function ORUSD() external view returns (address);
-
-    function USDB() external view returns (address);
-
+    function WETH() external view returns (address);
 
     /**
      * addLiquidity *
@@ -34,24 +29,6 @@ interface IOutrunAMMRouter {
         uint256 deadline
     ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
 
-    function addLiquidityUSDB(
-        address token,
-        uint256 amountTokenDesired,
-        uint256 amountUSDBDesired,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256 amountToken, uint256 amountUSDB, uint256 liquidity);
-
-    function addLiquidityETHAndUSDB(
-        uint256 amountUSDBDesired,
-        uint256 amountETHMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256 amountETH, uint256 amountUSDB, uint256 liquidity);
-
     /**
      * removeLiquidity *
      */
@@ -73,23 +50,6 @@ interface IOutrunAMMRouter {
         address to,
         uint256 deadline
     ) external returns (uint256 amountToken, uint256 amountETH);
-
-    function removeLiquidityUSDB(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountToken, uint256 amountUSDB);
-
-    function removeLiquidityETHAndUSDB(
-        uint256 liquidity,
-        uint256 amountETHMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountETH, uint256 amountUSDB);
 
     function removeLiquidityWithPermit(
         address tokenA,
@@ -118,31 +78,6 @@ interface IOutrunAMMRouter {
         bytes32 s
     ) external returns (uint256 amountToken, uint256 amountETH);
 
-    function removeLiquidityUSDBWithPermit(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountToken, uint256 amountUSDB);
-
-    function removeLiquidityETHAndUSDBWithPermit(
-        uint256 liquidity,
-        uint256 amountETHMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountETH, uint256 amountUSDB);
-
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
         uint256 liquidity,
@@ -164,28 +99,6 @@ interface IOutrunAMMRouter {
         bytes32 r,
         bytes32 s
     ) external returns (uint256 amountETH);
-
-    function removeLiquidityUSDBSupportingFeeOnTransferTokens(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountUSDB);
-
-    function removeLiquidityUSDBWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountUSDBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountUSDB);
 
     /**
      * swap *
@@ -236,71 +149,6 @@ interface IOutrunAMMRouter {
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
-    function swapExactUSDBForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapTokensForExactUSDB(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapExactTokensForUSDB(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapUSDBForExactTokens(
-        uint256 amountIn,
-        uint256 amountOut,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    /**
-     * SWAP with Pair(ETH, USDB) *
-     */
-    function swapExactETHForUSDB(
-        uint256 amountOutMin, 
-        address[] calldata path, 
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
-
-    function swapUSDBForExactETH(
-        uint256 amountOut,
-        uint256 amountInMax,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapExactUSDBForETH(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function swapETHForExactUSDB(
-        uint256 amountOut, 
-        address[] calldata path, 
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
-
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -323,23 +171,6 @@ interface IOutrunAMMRouter {
         address to,
         uint256 deadline
     ) external;
-
-    function swapExactUSDBForTokensSupportingFeeOnTransferTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external;
-
-    function swapExactTokensForUSDBSupportingFeeOnTransferTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external;
-
 
     function quote(
         uint256 amountA, 
@@ -382,6 +213,4 @@ interface IOutrunAMMRouter {
     error ExcessiveInputAmount();
 
     error InsufficientOutputAmount();
-
-
 }
