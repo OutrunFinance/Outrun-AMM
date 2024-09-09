@@ -14,7 +14,7 @@ contract OutrunMulticall {
         bytes returnData;
     }
 
-    constructor(address _manager) {}
+    constructor() {}
 
     function getCurrentBlockTimestamp() public view returns (uint256 timestamp) {
         timestamp = block.timestamp;
