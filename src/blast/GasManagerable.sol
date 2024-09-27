@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import "./IBlast.sol";
 
 abstract contract GasManagerable {
-    IBlast public constant BLAST = IBlast(0x4300000000000000000000000000000000000002);
+    IBlast public constant BLAST = IBlast(0x4300000000000000000000000000000000000002); // TODO update when mainnet
 
     address public gasManager;
 

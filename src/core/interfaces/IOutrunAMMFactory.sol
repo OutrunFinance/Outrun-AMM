@@ -2,6 +2,10 @@
 pragma solidity ^0.8.26;
 
 interface IOutrunAMMFactory {
+    function pointsOperator() external view returns (address);
+
+    function swapFeeRate() external view returns (uint256);
+
     function feeTo() external view returns (address);
 
     function allPairs(uint256) external view returns (address pair);

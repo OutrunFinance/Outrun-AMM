@@ -2,6 +2,11 @@
 pragma solidity ^0.8.26;
 
 interface IOutrunAMMPair {
+    struct MakerYield {
+        uint128 index;
+        uint128 accrued;
+    }
+
     function MINIMUM_LIQUIDITY() external pure returns (uint256);
 
     function factory() external view returns (address);
@@ -18,12 +23,22 @@ interface IOutrunAMMPair {
 
     function feeGrowthX128() external view returns (uint256);
 
+    function makerBETHYields(address maker) external view returns (uint128 index, uint128 accrued);
+
+    function makerUSDBYields(address maker) external view returns (uint128 index, uint128 accrued);
+
+    function getPairTokens() external view returns (address _token0, address _token1);
+
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
 
-    function viewUnClaimedFee() external view returns (uint256 amount0, uint256 amount1);
+    function previewMakerFee() external view returns (uint256 amount0, uint256 amount1);
+
+    function previewNativeYield(address nativeYieldToken) external view returns (uint256 accrued);
 
 
-    function initialize(address token0, address token1) external;
+    function initialize(address token0, address token1, uint256 swapFeeRate, bool enableBETHNativeYield, bool enableUSDBNativeYield) external;
+
+    function updateAndDistributeYields(address to) external;
 
     function mint(address to) external returns (uint256 liquidity);
 
@@ -35,11 +50,15 @@ interface IOutrunAMMPair {
 
     function sync() external;
 
+    function claimMakerFee() external returns (uint256 amount0, uint256 amount1);
+
+    function resetBETHMakerYield(address maker) external;
+
+    function resetUSDBMakerYield(address maker) external;
+
     function transfer(address to, uint256 value) external returns (bool);
 
     function transferFrom(address from, address to, uint256 value) external returns (bool);
-
-    function claimMakerFee() external returns (uint256 amount0, uint256 amount1);
 
 
     error Locked();
@@ -53,6 +72,10 @@ interface IOutrunAMMPair {
     error ProductKLoss();
 
     error TransferFailed();
+
+    error FeeRateOverflow();
+
+    error PermissionDenied();
 
     error InsufficientLiquidity();
 

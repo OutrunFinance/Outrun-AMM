@@ -9,8 +9,8 @@ import "./interfaces/IOutrunAMMERC20.sol";
 abstract contract OutrunAMMERC20 is EIP712, IOutrunAMMERC20 {
     bytes32 public constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
-    string public constant name = "Outswap V1";
-    string public constant symbol = "OUT-V1";
+    string public constant name = "Outrun AMM";
+    string public constant symbol = "OUT-AMM";
     uint8 public constant decimals = 18;
     uint256 public totalSupply;
 
@@ -38,7 +38,7 @@ abstract contract OutrunAMMERC20 is EIP712, IOutrunAMMERC20 {
 
     error InvalidAccountNonce(address account, uint256 currentNonce);
 
-    constructor() EIP712("Outswap V1", "1") {}
+    constructor() EIP712("Outrun AMM", "1") {}
 
     function _msgSender() internal view returns (address) {
         return msg.sender;
