@@ -1,3 +1,5 @@
+**To check the Blast version code, please switch to the [Blast branch](https://github.com/OutrunFinance/Outrun-AMM/tree/blast)**
+
 [Gitbook](https://outrun.gitbook.io/doc/outswap "Outrun Official Doc")  
 
 **Read this in Chinese: [中文](README.cn.md)**
