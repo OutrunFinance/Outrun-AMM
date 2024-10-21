@@ -6,13 +6,13 @@ interface IOutrunAMMYieldVault {
 
     function initialize(address _facotry) external;
 
-    function claimBETHYield(address pair, address maker) external;
+    function claimBETHNativeYield(address pair, address maker) external;
 
-    function claimUSDBYield(address pair, address maker) external;
+    function claimUSDBNativeYield(address pair, address maker) external;
 
-    event ClaimBETHYield(address pair, address maker, uint256 accruedYield);
+    event ClaimBETHNativeYield(address pair, address maker, uint256 accruedYield);
 
-    event ClaimUSDBYield(address pair, address maker, uint256 accruedYield);
+    event ClaimUSDBNativeYield(address pair, address maker, uint256 accruedYield);
 
     error ZeroInput();
 

@@ -33,7 +33,7 @@ contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, GasManagera
         facotry = _facotry;
     }
 
-    function claimBETHYield(address pair, address maker) external override {
+    function claimBETHNativeYield(address pair, address maker) external override {
         require(isValidPair(pair), InValidPair());
         require(maker != address(0) || pair != address(0), ZeroInput());
         
@@ -42,10 +42,10 @@ contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, GasManagera
         TransferHelper.safeTransfer(SY_BETH, maker, accruedYield);
         IOutrunAMMPair(pair).clearBETHNativeYield(maker);
 
-        emit ClaimBETHYield(pair, maker, accruedYield);
+        emit ClaimBETHNativeYield(pair, maker, accruedYield);
     }
 
-    function claimUSDBYield(address pair, address maker) external override {
+    function claimUSDBNativeYield(address pair, address maker) external override {
         require(isValidPair(pair), InValidPair());
         require(maker != address(0) || pair != address(0), ZeroInput());
 
@@ -54,6 +54,6 @@ contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, GasManagera
         TransferHelper.safeTransfer(SY_USDB, maker, accruedYield);
         IOutrunAMMPair(pair).clearUSDBNativeYield(maker);
 
-        emit ClaimUSDBYield(pair, maker, accruedYield);
+        emit ClaimUSDBNativeYield(pair, maker, accruedYield);
     }
 }
