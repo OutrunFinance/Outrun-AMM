@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 interface IOutrunAMMPair {
-    struct MakerYield {
+    struct MakerNativeYield {
         uint128 index;
         uint128 accrued;
     }
@@ -23,9 +23,9 @@ interface IOutrunAMMPair {
 
     function feeGrowthX128() external view returns (uint256);
 
-    function makerBETHYields(address maker) external view returns (uint128 index, uint128 accrued);
+    function makerBETHNativeYields(address maker) external view returns (uint128 index, uint128 accrued);
 
-    function makerUSDBYields(address maker) external view returns (uint128 index, uint128 accrued);
+    function makerUSDBNativeYields(address maker) external view returns (uint128 index, uint128 accrued);
 
     function getPairTokens() external view returns (address _token0, address _token1);
 
@@ -52,9 +52,9 @@ interface IOutrunAMMPair {
 
     function claimMakerFee() external returns (uint256 amount0, uint256 amount1);
 
-    function resetBETHMakerYield(address maker) external;
+    function clearBETHNativeYield(address maker) external;
 
-    function resetUSDBMakerYield(address maker) external;
+    function clearUSDBNativeYield(address maker) external;
 
     error Locked();
 

@@ -49,8 +49,8 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
     bool public enableUSDBNativeYield;
     uint256 public syBETHYieldIndex;
     uint256 public syUSDBYieldIndex;
-    mapping(address maker => MakerYield) public makerBETHYields;
-    mapping(address maker => MakerYield) public makerUSDBYields;
+    mapping(address maker => MakerNativeYield) public makerBETHNativeYields;
+    mapping(address maker => MakerNativeYield) public makerUSDBNativeYields;
 
     uint256 public feeGrowthX128; // accumulate maker fee per LP X128
     mapping(address account => uint256) public feeGrowthRecordX128; // record the feeGrowthX128 when calc maker's append fee
@@ -109,7 +109,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
             if (yieldAmount > 0) {
                 uint256 syAmount = IStandardizedYield(SY_BETH).previewDeposit(nativeYieldToken, yieldAmount);
                 uint256 newIndex = syBETHYieldIndex + syAmount.divDown(totalSupply);
-                MakerYield storage lastYield = makerBETHYields[msgSender];
+                MakerNativeYield storage lastYield = makerBETHNativeYields[msgSender];
                 accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf(msgSender));
             }
         } else if (nativeYieldToken == USDB) {
@@ -117,7 +117,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
             if (yieldAmount > 0) {
                 uint256 syAmount = IStandardizedYield(SY_USDB).previewDeposit(nativeYieldToken, yieldAmount);
                 uint256 newIndex = syUSDBYieldIndex + syAmount.divDown(totalSupply);
-                MakerYield storage lastYield = makerUSDBYields[msgSender];
+                MakerNativeYield storage lastYield = makerUSDBNativeYields[msgSender];
                 accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf(msgSender));
             }
         }
@@ -352,15 +352,21 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
-    function resetBETHMakerYield(address maker) external {
+    /**
+     * @dev Clear the accumulated BETH native yield from the account after claiming the native yield
+     */
+    function clearBETHNativeYield(address maker) external {
         require(msg.sender == YIELD_VAULT, PermissionDenied());
-        makerBETHYields[maker].accrued = 0;
+        makerBETHNativeYields[maker].accrued = 0;
 
     }
 
-    function resetUSDBMakerYield(address maker) external {
+    /**
+     * @dev Clear the accumulated USDB native yield from the account after claiming the native yield
+     */
+    function clearUSDBNativeYield(address maker) external {
         require(msg.sender == YIELD_VAULT, PermissionDenied());
-        makerUSDBYields[maker].accrued = 0;
+        makerUSDBNativeYields[maker].accrued = 0;
     }
 
     function _safeTransfer(address token, address to, uint256 value) internal {
@@ -374,7 +380,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         if (newIndex > _syBETHYieldIndex) {
             syBETHYieldIndex = newIndex;
 
-            MakerYield storage lastYield = makerBETHYields[to];
+            MakerNativeYield storage lastYield = makerBETHNativeYields[to];
             lastYield.accrued += uint128((newIndex - lastYield.index).mulDown(balanceOf(to)));
             lastYield.index = uint128(newIndex);
         }
@@ -386,12 +392,15 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         if (newIndex > _syUSDBYieldIndex) {
             syUSDBYieldIndex = newIndex;
 
-            MakerYield storage lastYield = makerUSDBYields[to];
+            MakerNativeYield storage lastYield = makerUSDBNativeYields[to];
             lastYield.accrued += uint128((newIndex - lastYield.index).mulDown(balanceOf(to)));
             lastYield.index = uint128(newIndex);
         }
     }
 
+    /**
+     * @dev Convert native yield into SY, then calculate the new yieldIndex
+     */
     function _calcNewYieldIndex(
         address nativeYieldToken,
         address SY,

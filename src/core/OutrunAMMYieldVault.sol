@@ -38,9 +38,9 @@ contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, GasManagera
         require(maker != address(0) || pair != address(0), ZeroInput());
         
         IOutrunAMMPair(pair).updateAndDistributeYields(maker);
-        (, uint128 accruedYield) = IOutrunAMMPair(pair).makerBETHYields(maker);
+        (, uint128 accruedYield) = IOutrunAMMPair(pair).makerBETHNativeYields(maker);
         TransferHelper.safeTransfer(SY_BETH, maker, accruedYield);
-        IOutrunAMMPair(pair).resetBETHMakerYield(maker);
+        IOutrunAMMPair(pair).clearBETHNativeYield(maker);
 
         emit ClaimBETHYield(pair, maker, accruedYield);
     }
@@ -50,9 +50,9 @@ contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, GasManagera
         require(maker != address(0) || pair != address(0), ZeroInput());
 
         IOutrunAMMPair(pair).updateAndDistributeYields(maker);
-        (, uint128 accruedYield) = IOutrunAMMPair(pair).makerUSDBYields(maker);
+        (, uint128 accruedYield) = IOutrunAMMPair(pair).makerUSDBNativeYields(maker);
         TransferHelper.safeTransfer(SY_USDB, maker, accruedYield);
-        IOutrunAMMPair(pair).resetUSDBMakerYield(maker);
+        IOutrunAMMPair(pair).clearUSDBNativeYield(maker);
 
         emit ClaimUSDBYield(pair, maker, accruedYield);
     }
