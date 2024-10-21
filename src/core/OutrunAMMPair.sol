@@ -156,8 +156,8 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
     function updateAndDistributeYields(address to) public {
         uint256 _totalSupply = totalSupply;
         if (_totalSupply != 0) {
-            if (enableBETHNativeYield) _processBETHYield(to, syBETHYieldIndex, _totalSupply);
-            if (enableUSDBNativeYield) _processUSDBYield(to, syUSDBYieldIndex, _totalSupply);
+            if (enableBETHNativeYield) _processBETHYield(to, _totalSupply);
+            if (enableUSDBNativeYield) _processUSDBYield(to, _totalSupply);
         }
     }
 
@@ -363,27 +363,12 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         makerUSDBYields[maker].accrued = 0;
     }
 
-    function transfer(address to, uint256 value) external override returns (bool) {
-        address owner = _msgSender();
-        _calcFeeX128(owner);
-        _transfer(owner, to, value);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 value) external override returns (bool) {
-        address spender = _msgSender();
-        _spendAllowance(from, spender, value);
-        _calcFeeX128(from);
-        _transfer(from, to, value);
-        return true;
-    }
-
     function _safeTransfer(address token, address to, uint256 value) internal {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), TransferFailed());
     }
 
-    function _processBETHYield(address to, uint256 yieldIndex, uint256 totalShare) internal {
+    function _processBETHYield(address to, uint256 totalShare) internal {
         uint256 _syBETHYieldIndex = syBETHYieldIndex;
         uint256 newIndex = _calcNewYieldIndex(WETH, SY_BETH, _syBETHYieldIndex, totalShare);
         if (newIndex > _syBETHYieldIndex) {
@@ -395,7 +380,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         }
     }
 
-    function _processUSDBYield(address to, uint256 yieldIndex, uint256 totalShare) internal {
+    function _processUSDBYield(address to, uint256 totalShare) internal {
         uint256 _syUSDBYieldIndex = syUSDBYieldIndex;
         uint256 newIndex = _calcNewYieldIndex(USDB, SY_USDB, _syUSDBYieldIndex, totalShare);
         if (newIndex > _syUSDBYieldIndex) {
@@ -493,5 +478,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
 
     function _feeTo() internal view returns (address) {
         return IOutrunAMMFactory(factory).feeTo();
+    }
+
+    function _beforeTokenTransfer(address from, address, uint256) internal override {
+        _calcFeeX128(from);
     }
 }

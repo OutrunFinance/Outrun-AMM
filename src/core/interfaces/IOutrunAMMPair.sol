@@ -56,11 +56,6 @@ interface IOutrunAMMPair {
 
     function resetUSDBMakerYield(address maker) external;
 
-    function transfer(address to, uint256 value) external returns (bool);
-
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
-
-
     error Locked();
 
     error Overflow();
