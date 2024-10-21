@@ -20,6 +20,7 @@ interface IOutrunAMMERC20 {
     function transfer(address to, uint value) external returns (bool);
 
     function transferFrom(address from, address to, uint value) external returns (bool);
+    
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     

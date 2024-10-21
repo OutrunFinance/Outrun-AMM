@@ -50,10 +50,10 @@ contract OutrunAMMScript is BaseScript {
         OutrunAMMYieldVault yieldVault01 = new OutrunAMMYieldVault(SY_BETH, SY_USDB, gasManager);
         address yieldVault01Addr = address(yieldVault01);
         OutrunAMMFactory factory01 = new OutrunAMMFactory(owner, gasManager, WETH, USDB, yieldVault01Addr, pointsOperator, 30);
-        address factory01Addr = address(factory01);
-        yieldVault01.initialize(factory01Addr);
         factory01.setFeeTo(feeTo);
+        yieldVault01.initialize(factory01Addr);
 
+        address factory01Addr = address(factory01);
         console.log("0.3% fee OutrunAMMYieldVault deployed on %s", yieldVault01Addr);
         console.log("0.3% fee OutrunAMMFactory deployed on %s", factory01Addr);
 
@@ -62,9 +62,9 @@ contract OutrunAMMScript is BaseScript {
         address yieldVault02Addr = address(yieldVault02);
         OutrunAMMFactory factory02 = new OutrunAMMFactory(owner, gasManager, WETH, USDB, yieldVault02Addr, pointsOperator, 100);
         factory02.setFeeTo(feeTo);
-        address factory02Addr = address(factory02);
         yieldVault02.initialize(factory02Addr);
 
+        address factory02Addr = address(factory02);
         console.log("1% fee OutrunAMMYieldVault deployed on %s", yieldVault02Addr);
         console.log("1% fee OutrunAMMFactory deployed on %s", factory02Addr);
 
