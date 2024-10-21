@@ -3,12 +3,9 @@ pragma solidity ^0.8.24;
 
 import "./BaseScript.s.sol";
 import "../src/core/OutrunAMMERC20.sol";
-import "../src/core/OutrunAMMPair01.sol";
-import "../src/core/OutrunAMMPair02.sol";
-import "../src/core/OutrunAMMFactory01.sol";
-import "../src/core/OutrunAMMFactory02.sol";
-import "../src/router/OutrunAMMRouter01.sol";
-import "../src/router/OutrunAMMRouter02.sol";
+import "../src/core/OutrunAMMPair.sol";
+import "../src/core/OutrunAMMFactory.sol";
+import "../src/router/OutrunAMMRouter.sol";
 import "../src/referral/ReferralManager.sol";
 import "../src/router/OutrunMulticall.sol";
 
@@ -20,9 +17,6 @@ contract OutrunAMMScript is BaseScript {
     address internal signer;
     address internal referralManager;
 
-    OutrunAMMFactory01 internal factory01;
-    OutrunAMMFactory02 internal factory02;
-
     function run() public broadcaster {
         WETH = vm.envAddress("WETH");
         owner = vm.envAddress("OWNER");
@@ -30,11 +24,8 @@ contract OutrunAMMScript is BaseScript {
         registrar = vm.envAddress("REGISTRAR");
         signer = vm.envAddress("SIGNER");
         
-        console.log("0.3% Fee Pair initcode:");
-        console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair01).creationCode)));
-
-        console.log("1% Fee Pair initcode:");
-        console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair02).creationCode)));
+        console.log("Pair initcode:");
+        console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode)));
 
         // ReferralManager
         referralManager = address(new ReferralManager(registrar, signer));
@@ -44,26 +35,36 @@ contract OutrunAMMScript is BaseScript {
         address multicall = address(new OutrunMulticall());
         console.log("OutrunMulticall deployed on %s", multicall);
 
-        // OutrunAMMFactory01
-        factory01 = new OutrunAMMFactory01(owner);
+        // 0.3% fee
+        OutrunAMMFactory factory01 = new OutrunAMMFactory(owner, 30);
         factory01.setFeeTo(feeTo);
+
         address factory01Addr = address(factory01);
-        console.log("OutrunAMMFactory01 deployed on %s", factory01Addr);
+        console.log("0.3% fee OutrunAMMFactory deployed on %s", factory01Addr);
 
-        // OutrunAMMFactory02
-        factory02 = new OutrunAMMFactory02(owner);
+        // 1% fee
+        OutrunAMMFactory factory02 = new OutrunAMMFactory(owner, 100);
         factory02.setFeeTo(feeTo);
+
         address factory02Addr = address(factory02);
-        console.log("OutrunAMMFactory02 deployed on %s", factory02Addr);
+        console.log("1% fee OutrunAMMFactory deployed on %s", factory02Addr);
 
-        // OutrunAMMRouter01
-        OutrunAMMRouter01 router01 = new OutrunAMMRouter01(factory01Addr, WETH, referralManager);
+        // 0.3% fee OutrunAMMRouter01
+        OutrunAMMRouter router01 = new OutrunAMMRouter(
+            factory01Addr, 
+            WETH, 
+            referralManager
+        );
         address router01Addr = address(router01);
-        console.log("OutrunAMMRouter01 deployed on %s", router01Addr);
+        console.log("0.3% fee OutrunAMMRouter deployed on %s", router01Addr);
 
-        // OutrunAMMRouter02
-        OutrunAMMRouter02 router02 = new OutrunAMMRouter02(factory02Addr, WETH, referralManager);
+        // 1% fee OutrunAMMRouter02
+        OutrunAMMRouter router02 = new OutrunAMMRouter(
+            factory02Addr, 
+            WETH, 
+            referralManager
+        );
         address router02Addr = address(router02);
-        console.log("OutrunAMMRouter02 deployed on %s", router02Addr);
+        console.log("1% fee OutrunAMMRouter deployed on %s", router02Addr);
     }
 }

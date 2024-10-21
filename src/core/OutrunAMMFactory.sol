@@ -3,17 +3,23 @@ pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "./OutrunAMMPair.sol";
 import "./interfaces/IOutrunAMMFactory.sol";
-import "./OutrunAMMPair01.sol";
 
-contract OutrunAMMFactory01 is IOutrunAMMFactory, Ownable {
+contract OutrunAMMFactory is IOutrunAMMFactory, Ownable {
+    uint256 public immutable swapFeeRate;
+
     address public feeTo;
-
     address[] public allPairs;
-
+    
     mapping(address => mapping(address => address)) public getPair;
 
-    constructor(address owner) Ownable(owner) {}
+    constructor(
+        address owner_, 
+        uint256 swapFeeRate_
+    ) Ownable(owner_) {
+        swapFeeRate = swapFeeRate_;
+    }
 
     function allPairsLength() external view returns (uint256) {
         return allPairs.length;
@@ -26,9 +32,10 @@ contract OutrunAMMFactory01 is IOutrunAMMFactory, Ownable {
         require(token0 != address(0), ZeroAddress());
         require(getPair[token0][token1] == address(0), PairExists()); // single check is sufficient
 
-        bytes32 _salt = keccak256(abi.encodePacked(token0, token1));
-        pair = address(new OutrunAMMPair01{salt: _salt}());
-        IOutrunAMMPair(pair).initialize(token0, token1);
+        bytes32 _salt = keccak256(abi.encodePacked(token0, token1, swapFeeRate));
+        pair = address(new OutrunAMMPair{salt: _salt}());
+        IOutrunAMMPair(pair).initialize(token0, token1, swapFeeRate);
+        
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);

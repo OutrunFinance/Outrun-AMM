@@ -1,28 +1,27 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./OutrunAMMERC20.sol";
 import "./interfaces/IOutrunAMMPair.sol";
-import "./interfaces/IOutrunAMMFactory.sol";
 import "./interfaces/IOutrunAMMCallee.sol";
+import "./interfaces/IOutrunAMMFactory.sol";
 import "../libraries/UQ112x112.sol";
 import "../libraries/FixedPoint128.sol";
 
-/**
- * @title OutrunAMMPair01 - Pair fee 0.3%
- */
-contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
+contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
     using UQ112x112 for uint224;
 
-    uint256 public constant MINIMUM_LIQUIDITY = 1000;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
+    uint256 public constant RATIO = 10000;
+    uint256 public constant MINIMUM_LIQUIDITY = 1000;
 
     address public factory;
     address public token0;
     address public token1;
+    uint256 public swapFeeRate;
 
     uint112 private reserve0; // uses single storage slot, accessible via getReserves
     uint112 private reserve1; // uses single storage slot, accessible via getReserves
@@ -50,6 +49,11 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
         factory = msg.sender;
     }
 
+    function getPairTokens() external view override returns (address _token0, address _token1) {
+        _token0 = token0;
+        _token1 = token1;
+    }
+
     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
         _reserve0 = reserve0;
         _reserve1 = reserve1;
@@ -57,9 +61,9 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
     }
 
     /**
-     * @dev View unclaimed maker fee
+     * @dev Preview unclaimed maker fee
      */
-    function viewUnClaimedFee() external view override returns (uint256 amount0, uint256 amount1) {
+    function previewMakerFee() external view override returns (uint256 amount0, uint256 amount1) {
         address msgSender = msg.sender;
         uint256 feeAppendX128 = balanceOf(msgSender) * (feeGrowthX128 - feeGrowthRecordX128[msgSender]);
         uint256 unClaimedFeeX128 = unClaimedFeesX128[msgSender];
@@ -73,11 +77,17 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
     }
 
     // called once by the factory at time of deployment
-    function initialize(address _token0, address _token1) external {
+    function initialize(
+        address _token0, 
+        address _token1, 
+        uint256 _swapFeeRate
+    ) external {
         require(msg.sender == factory, Forbidden());
+        require(_swapFeeRate < RATIO, FeeRateOverflow());
 
         token0 = _token0;
         token1 = _token1;
+        swapFeeRate = _swapFeeRate;
     }
 
     /**
@@ -184,12 +194,11 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
         uint256 protocolFee0;
         uint256 protocolFee1;
         {
-            // 0.3% swap fee
-            uint256 balance0Adjusted = balance0 * 1000 - amount0In * 3;
-            uint256 balance1Adjusted = balance1 * 1000 - amount1In * 3;
+            uint256 balance0Adjusted = balance0 * RATIO - amount0In * swapFeeRate;
+            uint256 balance1Adjusted = balance1 * RATIO - amount1In * swapFeeRate;
             
             require(
-                balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * 1000 ** 2,
+                balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * RATIO ** 2,
                 ProductKLoss()
             );
 
@@ -268,22 +277,7 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
-    function transfer(address to, uint256 value) external override returns (bool) {
-        address owner = _msgSender();
-        _calcFeeX128(owner);
-        _transfer(owner, to, value);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 value) external override returns (bool) {
-        address spender = _msgSender();
-        _spendAllowance(from, spender, value);
-        _calcFeeX128(from);
-        _transfer(from, to, value);
-        return true;
-    }
-
-    function _safeTransfer(address token, address to, uint256 value) private {
+    function _safeTransfer(address token, address to, uint256 value) internal {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), TransferFailed());
     }
@@ -291,7 +285,7 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
     /**
      * @dev update reserves and, on the first call per block, price accumulators
      */
-    function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {
+    function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) internal {
         require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, Overflow());
 
         uint32 blockTimestamp;
@@ -329,15 +323,15 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
         }
 
         if (referrer == address(0)) {
-            // 0.3% * 30% as protocolFee
+            // swapFee * 25% as protocolFee
             rebateFee = 0;
-            protocolFee = amountIn * 9 / 10000;
+            protocolFee = amountIn * swapFeeRate / (RATIO * 4);
             balance -= protocolFee;
             _safeTransfer(token, feeTo, protocolFee);
         } else {
-            // 0.3% * 30% * 20% as rebateFee, 0.3% * 30% * 80% as protocolFee
-            rebateFee = amountIn * 9 / 50000;
-            protocolFee = amountIn * 9 / 12500;
+            // swapFee * 25% * 20% as rebateFee, swapFee * 25% * 80% as protocolFee
+            rebateFee = amountIn * swapFeeRate / (RATIO * 20);
+            protocolFee = amountIn * swapFeeRate / (RATIO * 5);
             balance -= rebateFee + protocolFee;
             _safeTransfer(token, referrer, rebateFee);
             _safeTransfer(token, feeTo, protocolFee);
@@ -347,7 +341,7 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
     /**
      * @dev Calculate the maker fee
      */
-    function _calcFeeX128(address to) private {
+    function _calcFeeX128(address to) internal {
         uint256 _feeGrowthX128 = feeGrowthX128;
         unchecked {
             uint256 feeAppendX128 = balanceOf(to) * (_feeGrowthX128 - feeGrowthRecordX128[to]);
@@ -360,5 +354,9 @@ contract OutrunAMMPair01 is IOutrunAMMPair, OutrunAMMERC20 {
 
     function _feeTo() internal view returns (address) {
         return IOutrunAMMFactory(factory).feeTo();
+    }
+
+    function _beforeTokenTransfer(address from, address, uint256) internal override {
+        _calcFeeX128(from);
     }
 }

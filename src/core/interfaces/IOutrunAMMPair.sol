@@ -17,13 +17,15 @@ interface IOutrunAMMPair {
     function kLast() external view returns (uint256);
 
     function feeGrowthX128() external view returns (uint256);
+    
+    function getPairTokens() external view returns (address _token0, address _token1);
 
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
 
-    function viewUnClaimedFee() external view returns (uint256 amount0, uint256 amount1);
+    function previewMakerFee() external view returns (uint256 amount0, uint256 amount1);
 
 
-    function initialize(address token0, address token1) external;
+    function initialize(address token0, address token1, uint256 swapFeeRate) external;
 
     function mint(address to) external returns (uint256 liquidity);
 
@@ -34,10 +36,6 @@ interface IOutrunAMMPair {
     function skim(address to) external;
 
     function sync() external;
-
-    function transfer(address to, uint256 value) external returns (bool);
-
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
 
     function claimMakerFee() external returns (uint256 amount0, uint256 amount1);
 
@@ -53,6 +51,8 @@ interface IOutrunAMMPair {
     error ProductKLoss();
 
     error TransferFailed();
+
+    error FeeRateOverflow();
 
     error InsufficientLiquidity();
 
