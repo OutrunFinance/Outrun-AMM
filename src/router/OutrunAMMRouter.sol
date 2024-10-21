@@ -118,7 +118,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter, GasManagerable {
         uint256 deadline
     ) public virtual override ensure(deadline) returns (uint256 amountA, uint256 amountB) {
         address pair = OutrunAMMLibrary.pairFor(factory, tokenA, tokenB, swapFeeRate);
-        IOutrunAMMPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+        IOutrunAMMERC20(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint256 amount0, uint256 amount1) = IOutrunAMMPair(pair).burn(to);
         (address token0,) = OutrunAMMLibrary.sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
@@ -140,43 +140,6 @@ contract OutrunAMMRouter is IOutrunAMMRouter, GasManagerable {
         TransferHelper.safeTransferETH(to, amountETH);
     }
 
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint256 liquidity,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external virtual override returns (uint256 amountA, uint256 amountB) {
-        address pair = OutrunAMMLibrary.pairFor(factory, tokenA, tokenB, swapFeeRate);
-        uint256 value = approveMax ? type(uint256).max : liquidity;
-        IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
-    }
-
-    function removeLiquidityETHWithPermit(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external virtual override returns (uint256 amountToken, uint256 amountETH) {
-        address pair = OutrunAMMLibrary.pairFor(factory, token, WETH, swapFeeRate);
-        uint256 value = approveMax ? type(uint256).max : liquidity;
-        IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
-    }
-
     /**
      * REMOVE LIQUIDITY (supporting fee-on-transfer tokens) *
      */
@@ -192,26 +155,6 @@ contract OutrunAMMRouter is IOutrunAMMRouter, GasManagerable {
         TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
-    }
-
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external virtual override returns (uint256 amountETH) {
-        address pair = OutrunAMMLibrary.pairFor(factory, token, WETH, swapFeeRate);
-        uint256 value = approveMax ? type(uint256).max : liquidity;
-        IOutrunAMMERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
-            token, liquidity, amountTokenMin, amountETHMin, to, deadline
-        );
     }
 
     /**
