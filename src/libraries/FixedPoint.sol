@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "./BitMath.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {BitMath} from "./BitMath.sol";
 
 library FixedPoint {
     // range: [0, 2**112 - 1]

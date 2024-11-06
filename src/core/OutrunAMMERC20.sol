@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "@openzeppelin/contracts/utils/Context.sol";
+import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
-import "./interfaces/IOutrunAMMERC20.sol";
+import {IOutrunAMMERC20} from "./interfaces/IOutrunAMMERC20.sol";
 
 /**
  * @dev OutrunAMM's ERC20 implementation, modified from @openzeppelin implementation
