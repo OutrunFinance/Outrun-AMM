@@ -68,6 +68,7 @@ interface IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -76,6 +77,7 @@ interface IOutrunAMMRouter {
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -83,6 +85,7 @@ interface IOutrunAMMRouter {
         uint256 amountOutMin, 
         address[] calldata path, 
         address to,
+        address referrer,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
@@ -91,6 +94,7 @@ interface IOutrunAMMRouter {
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
@@ -99,13 +103,15 @@ interface IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
     function swapETHForExactTokens(
-        uint256 amountOut, 
-        address[] calldata path, 
-        address to, 
+        uint256 amountOut,
+        address[] calldata path,
+        address to,
+        address referrer,
         uint256 deadline
     ) external payable returns (uint256[] memory amounts);
 
@@ -114,6 +120,7 @@ interface IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external;
 
@@ -121,6 +128,7 @@ interface IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external payable;
 
@@ -129,6 +137,7 @@ interface IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external;
 

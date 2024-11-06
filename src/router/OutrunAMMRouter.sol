@@ -1,20 +1,18 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./interfaces/IOutrunAMMRouter.sol";
-import "../libraries/IWETH.sol";
-import "../libraries/TransferHelper.sol";
-import "../libraries/OutrunAMMLibrary.sol";
-import "../core/interfaces/IOutrunAMMERC20.sol";
-import "../core/interfaces/IOutrunAMMFactory.sol";
-import "../referral/interfaces/IReferralManager.sol";
+import { IOutrunAMMRouter } from "./interfaces/IOutrunAMMRouter.sol";
+import { IWETH } from "../libraries/IWETH.sol";
+import { TransferHelper } from "../libraries/TransferHelper.sol";
+import { IOutrunAMMPair, OutrunAMMLibrary } from "../libraries/OutrunAMMLibrary.sol";
+import { IOutrunAMMERC20 } from "../core/interfaces/IOutrunAMMERC20.sol";
+import { IOutrunAMMFactory } from "../core/interfaces/IOutrunAMMFactory.sol";
 
 contract OutrunAMMRouter is IOutrunAMMRouter {
     address public immutable factory;
     address public immutable WETH;
-    address public immutable referralManager;
     uint256 public immutable swapFeeRate;
 
     modifier ensure(uint256 deadline) {
@@ -22,10 +20,9 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         _;
     }
 
-    constructor(address _factory, address _WETH, address _referralManager) {
+    constructor(address _factory, address _WETH) {
         factory = _factory;
         WETH = _WETH;
-        referralManager = _referralManager;
         swapFeeRate = IOutrunAMMFactory(_factory).swapFeeRate();
     }
 
@@ -155,8 +152,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
      * SWAP *
      */
     // requires the initial amount to have already been sent to the first pair
-    function _swap(uint256[] memory amounts, address[] memory path, address _to) internal virtual {
-        address referrer = IReferralManager(referralManager).referrerOf(_to);
+    function _swap(uint256[] memory amounts, address[] memory path, address _to, address referrer) internal virtual {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = OutrunAMMLibrary.sortTokens(input, output);
@@ -174,6 +170,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = OutrunAMMLibrary.getAmountsOut(factory, amountIn, path, swapFeeRate);
@@ -181,7 +178,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amounts[0]
         );
-        _swap(amounts, path, to);
+        _swap(amounts, path, to, referrer);
     }
 
     function swapTokensForExactTokens(
@@ -189,6 +186,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         amounts = OutrunAMMLibrary.getAmountsIn(factory, amountOut, path, swapFeeRate);
@@ -196,13 +194,14 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amounts[0]
         );
-        _swap(amounts, path, to);
+        _swap(amounts, path, to, referrer);
     }
 
     function swapExactETHForTokens(
         uint256 amountOutMin, 
         address[] calldata path, 
         address to,
+        address referrer,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
         require(path[0] == WETH, InvalidPath());
@@ -210,7 +209,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         require(amounts[amounts.length - 1] >= amountOutMin, InsufficientOutputAmount());
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amounts[0]));
-        _swap(amounts, path, to);
+        _swap(amounts, path, to, referrer);
     }
 
     function swapTokensForExactETH(
@@ -218,6 +217,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountInMax,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         require(path[path.length - 1] == WETH, InvalidPath());
@@ -226,7 +226,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amounts[0]
         );
-        _swap(amounts, path, address(this));
+        _swap(amounts, path, address(this), referrer);
         IWETH(WETH).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
@@ -236,6 +236,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external virtual override ensure(deadline) returns (uint256[] memory amounts) {
         require(path[path.length - 1] == WETH, InvalidPath());
@@ -244,7 +245,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amounts[0]
         );
-        _swap(amounts, path, address(this));
+        _swap(amounts, path, address(this), referrer);
         IWETH(WETH).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
@@ -253,6 +254,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountOut, 
         address[] calldata path, 
         address to,
+        address referrer,
         uint256 deadline
     ) external payable virtual override ensure(deadline) returns (uint256[] memory amounts) {
         require(path[0] == WETH, InvalidPath());
@@ -260,7 +262,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         require(amounts[0] <= msg.value, ExcessiveInputAmount());
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amounts[0]));
-        _swap(amounts, path, to);
+        _swap(amounts, path, to, referrer);
         // refund dust eth, if any
         if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
     }
@@ -269,8 +271,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
      * SWAP (supporting fee-on-transfer tokens) *
      */
     // requires the initial amount to have already been sent to the first pair
-    function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to) internal virtual {
-        address referrer = IReferralManager(referralManager).referrerOf(_to);
+    function _swapSupportingFeeOnTransferTokens(address[] memory path, address _to, address referrer) internal virtual {
         for (uint256 i; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
             (address token0,) = OutrunAMMLibrary.sortTokens(input, output);
@@ -295,13 +296,14 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external virtual override ensure(deadline) {
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amountIn
         );
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
-        _swapSupportingFeeOnTransferTokens(path, to);
+        _swapSupportingFeeOnTransferTokens(path, to, referrer);
         require(
             IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
             InsufficientOutputAmount()
@@ -312,6 +314,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external payable virtual override ensure(deadline) {
         require(path[0] == WETH, InvalidPath());
@@ -319,7 +322,7 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         IWETH(WETH).deposit{value: amountIn}();
         assert(IWETH(WETH).transfer(OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
-        _swapSupportingFeeOnTransferTokens(path, to);
+        _swapSupportingFeeOnTransferTokens(path, to, referrer);
         require(
             IERC20(path[path.length - 1]).balanceOf(to) - balanceBefore >= amountOutMin,
             InsufficientOutputAmount()
@@ -331,13 +334,14 @@ contract OutrunAMMRouter is IOutrunAMMRouter {
         uint256 amountOutMin,
         address[] calldata path,
         address to,
+        address referrer,
         uint256 deadline
     ) external virtual override ensure(deadline) {
         require(path[path.length - 1] == WETH, InvalidPath());
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, OutrunAMMLibrary.pairFor(factory, path[0], path[1], swapFeeRate), amountIn
         );
-        _swapSupportingFeeOnTransferTokens(path, address(this));
+        _swapSupportingFeeOnTransferTokens(path, address(this), referrer);
         uint256 amountOut = IERC20(WETH).balanceOf(address(this));
         require(amountOut >= amountOutMin, InsufficientOutputAmount());
         IWETH(WETH).withdraw(amountOut);

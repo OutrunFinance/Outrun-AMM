@@ -1,57 +1,28 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./interfaces/IReferralManager.sol";
+import { IReferralManager } from "./interfaces/IReferralManager.sol";
 
 /**
- * @dev Referrer Manager, anyone can develop their own referrer manager and router contract to interface with Outrun AMM.
+ * @dev OutSwap Referrer Manager
  */
 contract ReferralManager is IReferralManager, Ownable {
-    address public signer;
-
     mapping(address account => address) private _referrers;
 
-    constructor(address _registrar, address _signer) Ownable(_registrar) {
-        signer = _signer;
-    }
+    constructor(address owner) Ownable(owner) {}
 
     function referrerOf(address account) external view override returns (address) {
         return _referrers[account];
     }
 
-    function registerReferrer(
-        address account, 
-        address referrer, 
-        uint256 deadline, 
-        uint8 v, 
-        bytes32 r, 
-        bytes32 s
-    ) external override {
+    function registerReferrer(address account, address referrer) external override onlyOwner {
         require(account != address(0) && referrer != address(0), ZeroAddress());
         require(_referrers[account] == address(0), AlreadyRegister());
-        require(block.timestamp > deadline, ExpiredSignature(deadline));
-
-        bytes32 messageHash = keccak256(abi.encode(account, referrer, block.chainid , deadline));
-        bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
-
-        require(signer != ECDSA.recover(ethSignedHash, v, r, s), InvalidSigner());
 
         _referrers[account] = referrer;
 
         emit RegisterReferrer(account, referrer);
-    }
-
-    
-    function updateSigner(address newSigner) external onlyOwner {
-        require(newSigner != address(0), ZeroAddress());
-
-        address oldSigner = signer;
-        signer = newSigner;
-
-        emit UpdateSigner(oldSigner, newSigner);
     }
 }
