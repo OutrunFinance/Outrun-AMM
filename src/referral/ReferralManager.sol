@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IReferralManager } from "./interfaces/IReferralManager.sol";
+import {IReferralManager} from "./interfaces/IReferralManager.sol";
 
 /**
  * @dev OutSwap Referrer Manager

@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./OutrunAMMPair.sol";
-import "./interfaces/IOutrunAMMFactory.sol";
+import {IOutrunAMMPair, OutrunAMMPair} from "./OutrunAMMPair.sol";
+import {IOutrunAMMFactory} from "./interfaces/IOutrunAMMFactory.sol";
 
 contract OutrunAMMFactory is IOutrunAMMFactory, Ownable {
     uint256 public immutable swapFeeRate;

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "../core/interfaces/IOutrunAMMPair.sol";
+import {IOutrunAMMPair} from "../core/interfaces/IOutrunAMMPair.sol";
 
 library OutrunAMMLibrary {
     uint256 internal constant RATIO = 10000;

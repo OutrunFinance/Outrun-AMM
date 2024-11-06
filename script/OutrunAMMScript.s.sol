@@ -2,12 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "./BaseScript.s.sol";
-import "../src/core/OutrunAMMERC20.sol";
-import "../src/core/OutrunAMMPair.sol";
-import "../src/core/OutrunAMMFactory.sol";
-import "../src/router/OutrunAMMRouter.sol";
-import "../src/referral/ReferralManager.sol";
-import "../src/router/OutrunMulticall.sol";
+import {OutrunAMMERC20} from "../src/core/OutrunAMMERC20.sol";
+import {OutrunAMMPair} from "../src/core/OutrunAMMPair.sol";
+import {OutrunAMMFactory} from "../src/core/OutrunAMMFactory.sol";
+import {OutrunAMMRouter} from "../src/router/OutrunAMMRouter.sol";
+import {ReferralManager} from "../src/referral/ReferralManager.sol";
 
 contract OutrunAMMScript is BaseScript {
     address internal WETH;

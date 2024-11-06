@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import "./FixedPoint.sol";
-import "../core/interfaces/IOutrunAMMPair.sol";
+import {FixedPoint} from "./FixedPoint.sol";
+import {IOutrunAMMPair} from "../core/interfaces/IOutrunAMMPair.sol";
 
 // library with helper methods for oracles that are concerned with computing average prices
 library OutrunAMMOracleLibrary {
