@@ -16,9 +16,9 @@ bsc_testnet = "${BSC_TESTNET_RPC}"
 bsc_mainnet = "${BSC_MAINNET_RPC}"
 
 [etherscan]
-base_sepolia = { key = "${BSCSCAN_API_KEY}", chain = "${BASE_SEPOLIA_CHAINID}", url = "${BASESCAN_API_URL}" }
-blast_sepolia = { key = "${BLASTSCAN_API_KEY}", chain = "${BLAST_SEPOLIA_CHAINID}", url = "${BLASTSCAN_API_URL}" }
-bsc_testnet = { key = "${BSCSCAN_API_KEY}", chain = "${BSC_TESTNET_CHAINID}", url = "${BSCSCAN_TESTNET_API_URL}" }
-bsc_mainnet = { key = "${BSCSCAN_API_KEY}", chain = "${BSC_MAINNET_CHAINID}", url = "${BSCSCAN_API_URL}" }
+base_sepolia = { key = "${BSCSCAN_API_KEY}", chain = "84532", url = "${BASESCAN_API_URL}" }
+blast_sepolia = { key = "${BLASTSCAN_API_KEY}", chain = "168587773", url = "${BLASTSCAN_API_URL}" }
+bsc_testnet = { key = "${BSCSCAN_API_KEY}", chain = "97", url = "${BSCSCAN_TESTNET_API_URL}" }
+bsc_mainnet = { key = "${BSCSCAN_API_KEY}", chain = "56", url = "${BSCSCAN_API_URL}" }
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
