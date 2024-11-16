@@ -357,7 +357,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
     }
 
     function _beforeTokenTransfer(address from, address to, uint256) internal override {
-        _calcFeeX128(from);
-        _calcFeeX128(to);
+        if (from != address(0)) _calcFeeX128(from);
+        if (to != address(0)) _calcFeeX128(to);
     }
 }
