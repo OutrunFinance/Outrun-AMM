@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {OutrunAMMERC20} from "./OutrunAMMERC20.sol";
+import {IOutrunAMMERC20, OutrunAMMERC20} from "./OutrunAMMERC20.sol";
 import {IOutrunAMMPair} from "./interfaces/IOutrunAMMPair.sol";
 import {IOutrunAMMCallee} from "./interfaces/IOutrunAMMCallee.sol";
 import {IOutrunAMMFactory} from "./interfaces/IOutrunAMMFactory.sol";
@@ -88,7 +88,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
      */
     function previewMakerFee() external view override returns (uint256 amount0, uint256 amount1) {
         address msgSender = msg.sender;
-        uint256 feeAppendX128 = balanceOf(msgSender) * (feeGrowthX128 - feeGrowthRecordX128[msgSender]);
+        uint256 feeAppendX128 = balanceOf[msgSender] * (feeGrowthX128 - feeGrowthRecordX128[msgSender]);
         uint256 unClaimedFeeX128 = unClaimedFeesX128[msgSender];
         if (feeAppendX128 > 0) {
             unClaimedFeeX128 += unClaimedFeeX128 + feeAppendX128;
@@ -108,17 +108,17 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
             uint256 yieldAmount = IERC20Rebasing(nativeYieldToken).getClaimableAmount(address(this));
             if (yieldAmount > 0) {
                 uint256 syAmount = IStandardizedYield(SY_BETH).previewDeposit(nativeYieldToken, yieldAmount);
-                uint256 newIndex = syBETHYieldIndex + syAmount.divDown(totalSupply);
+                uint256 newIndex = syBETHYieldIndex + syAmount.divDown(totalSupply - proactivelyBurnedAmount);
                 MakerNativeYield storage lastYield = makerBETHNativeYields[msgSender];
-                accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf(msgSender));
+                accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf[msgSender]);
             }
         } else if (nativeYieldToken == USDB) {
             uint256 yieldAmount = IERC20Rebasing(nativeYieldToken).getClaimableAmount(address(this));
             if (yieldAmount > 0) {
                 uint256 syAmount = IStandardizedYield(SY_USDB).previewDeposit(nativeYieldToken, yieldAmount);
-                uint256 newIndex = syUSDBYieldIndex + syAmount.divDown(totalSupply);
+                uint256 newIndex = syUSDBYieldIndex + syAmount.divDown(totalSupply - proactivelyBurnedAmount);
                 MakerNativeYield storage lastYield = makerUSDBNativeYields[msgSender];
-                accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf(msgSender));
+                accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf[msgSender]);
             }
         }
     }
@@ -156,8 +156,8 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
     function updateAndDistributeYields(address to) public {
         uint256 _totalSupply = totalSupply;
         if (_totalSupply != 0) {
-            if (enableBETHNativeYield) _processBETHYield(to, _totalSupply);
-            if (enableUSDBNativeYield) _processUSDBYield(to, _totalSupply);
+            if (enableBETHNativeYield) _processBETHYield(to, _totalSupply - proactivelyBurnedAmount);
+            if (enableUSDBNativeYield) _processUSDBYield(to, _totalSupply - proactivelyBurnedAmount);
         }
     }
 
@@ -167,16 +167,18 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
      * @notice this low-level function should be called from a contract which performs important safety checks
      */
     function mint(address to) external lock returns (uint256 liquidity) {
-        updateAndDistributeYields(to);
-
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
         uint256 balance1 = IERC20(token1).balanceOf(address(this));
         uint256 amount0 = balance0 - _reserve0;
         uint256 amount1 = balance1 - _reserve1;
 
-        _calcFeeX128(to);
-        uint256 _totalSupply = totalSupply; // must be defined here since totalSupply can update in _calcFeeX128
+        if (to != address(0)) {
+            updateAndDistributeYields(to);
+            _calcFeeX128(to);
+        }
+
+        uint256 _totalSupply = totalSupply;
         if (_totalSupply == 0) {
             liquidity = Math.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
             _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
@@ -207,10 +209,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         address _token1 = token1;
         uint256 balance0 = IERC20(_token0).balanceOf(address(this));
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
-        uint256 liquidity = balanceOf(address(this));
+        uint256 liquidity = balanceOf[address(this)];
 
-        _calcFeeX128(to);
-        uint256 _totalSupply = totalSupply; // must be defined here since totalSupply can update in _calcFeeX128
+        uint256 _totalSupply = totalSupply;
         amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
 
@@ -286,7 +287,8 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
 
         {
             uint256 k = uint256(reserve0) * uint256(reserve1);
-            feeGrowthX128 += ((Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128 / totalSupply);
+            // The market-making revenue from LPs that are proactively burned will be distributed to others
+            feeGrowthX128 += (Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128 / (totalSupply - proactivelyBurnedAmount);
             kLast = k;
         }
 
@@ -380,9 +382,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         if (newIndex > _syBETHYieldIndex) {
             syBETHYieldIndex = newIndex;
 
-            MakerNativeYield storage lastYield = makerBETHNativeYields[to];
-            lastYield.accrued += uint128((newIndex - lastYield.index).mulDown(balanceOf(to)));
-            lastYield.index = uint128(newIndex);
+            MakerNativeYield storage latestYield = makerBETHNativeYields[to];
+            latestYield.accrued += uint128((newIndex - latestYield.index).mulDown(balanceOf[to]));
+            latestYield.index = uint128(newIndex);
         }
     }
 
@@ -392,9 +394,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         if (newIndex > _syUSDBYieldIndex) {
             syUSDBYieldIndex = newIndex;
 
-            MakerNativeYield storage lastYield = makerUSDBNativeYields[to];
-            lastYield.accrued += uint128((newIndex - lastYield.index).mulDown(balanceOf(to)));
-            lastYield.index = uint128(newIndex);
+            MakerNativeYield storage latestYield = makerUSDBNativeYields[to];
+            latestYield.accrued += uint128((newIndex - latestYield.index).mulDown(balanceOf[to]));
+            latestYield.index = uint128(newIndex);
         }
     }
 
@@ -477,7 +479,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
     function _calcFeeX128(address to) internal {
         uint256 _feeGrowthX128 = feeGrowthX128;
         unchecked {
-            uint256 feeAppendX128 = balanceOf(to) * (_feeGrowthX128 - feeGrowthRecordX128[to]);
+            uint256 feeAppendX128 = balanceOf[to] * (_feeGrowthX128 - feeGrowthRecordX128[to]);
             if (feeAppendX128 > 0) {
                 unClaimedFeesX128[to] += feeAppendX128;
             }
@@ -489,7 +491,15 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         return IOutrunAMMFactory(factory).feeTo();
     }
 
-    function _beforeTokenTransfer(address from, address, uint256) internal override {
-        _calcFeeX128(from);
+    function _beforeTokenTransfer(address from, address to, uint256) internal override {
+        if (from != address(0)) {
+            updateAndDistributeYields(from);
+            _calcFeeX128(from);
+        }
+
+        if (to != address(0)) {
+            updateAndDistributeYields(to);
+            _calcFeeX128(to);
+        }
     }
 }
