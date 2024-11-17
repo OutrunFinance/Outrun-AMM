@@ -1,3 +1,7 @@
+# Pair init code hash
+
+7473c3d610002203fa041b5c9660816c72c66dfc7cd4e1ff353ceb57289c40f4
+
 # BSC Testnet
 
 ReferralManager: 0x19D4B167198a6f5c5cF5A31668a0F276c3EF173e  
