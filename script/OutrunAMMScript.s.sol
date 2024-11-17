@@ -23,8 +23,8 @@ contract OutrunAMMScript is BaseScript {
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode)));
 
         // ReferralManager
-        referralManager = address(new ReferralManager(owner));
-        console.log("ReferralManager deployed on %s", referralManager);
+        // referralManager = address(new ReferralManager(owner));
+        // console.log("ReferralManager deployed on %s", referralManager);
 
         // 0.3% fee
         OutrunAMMFactory factory01 = new OutrunAMMFactory(owner, 30);
