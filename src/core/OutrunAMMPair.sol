@@ -134,9 +134,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
         uint256 liquidity = balanceOf[address(this)];
 
-        uint256 _totalSupply = totalSupply;
-        amount0 = liquidity * balance0 / _totalSupply; // using balances ensures pro-rata distribution
-        amount1 = liquidity * balance1 / _totalSupply; // using balances ensures pro-rata distribution
+        uint256 _kLast = kLast;
+        amount0 = liquidity * balance0 / _kLast; // using balances ensures pro-rata distribution
+        amount1 = liquidity * balance1 / _kLast; // using balances ensures pro-rata distribution
 
         require(amount0 > 0 && amount1 > 0, InsufficientLiquidityBurned());
 
@@ -229,32 +229,29 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
 
         uint256 feeX128 = unClaimedFeesX128[msgSender];
         require(feeX128 > 0, InsufficientUnclaimedFee());
+        unClaimedFeesX128[msgSender] = 0;
         
         uint256 unClaimedFee;
         unchecked {
             unClaimedFee = feeX128 / FixedPoint128.Q128;
         }
-        unClaimedFeesX128[msgSender] = 0;
-        _mint(address(this), unClaimedFee);
 
-        // burn the fee of LP
-        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         address _token0 = token0;
         address _token1 = token1;
-        uint256 _totalSupply = totalSupply;
-        unchecked {
-            amount0 = unClaimedFee * _reserve0 / _totalSupply;
-            amount1 = unClaimedFee * _reserve1 / _totalSupply;           
-        }
-        require(amount0 > 0 && amount1 > 0, InsufficientLiquidityBurned());
+        uint256 _kLast = kLast;
+        uint256 balance0 = IERC20(_token0).balanceOf(address(this));
+        uint256 balance1 = IERC20(_token1).balanceOf(address(this));
+        amount0 = unClaimedFee * balance0 / _kLast;
+        amount1 = unClaimedFee * balance1 / _kLast;           
+        require(amount0 > 0 && amount1 > 0, InsufficientMakerFeeClaimed());
 
-        _burn(address(this), unClaimedFee);
         _safeTransfer(_token0, msgSender, amount0);
         _safeTransfer(_token1, msgSender, amount1);
 
-        _update(
-            IERC20(_token0).balanceOf(address(this)), IERC20(_token1).balanceOf(address(this)), _reserve0, _reserve1
-        );
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
+        balance0 = IERC20(_token0).balanceOf(address(this));
+        balance1 = IERC20(_token1).balanceOf(address(this));
+        _update(balance0, balance1, _reserve0, _reserve1);
 
         kLast = uint256(reserve0) * uint256(reserve1);
     }
