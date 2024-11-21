@@ -84,6 +84,8 @@ interface IOutrunAMMPair {
 
     error InsufficientLiquidityBurned();
 
+    error InsufficientMakerFeeClaimed();
+
 
     event Mint(address indexed sender, address indexed to, uint256 amount0, uint256 amount1);
 
