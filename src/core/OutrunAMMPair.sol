@@ -104,11 +104,13 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
      */
     function previewNativeYield(address nativeYieldToken) external view override returns (uint256 accrued) {
         address msgSender = msg.sender;
+        uint256 actualSupply = totalSupply - proactivelyBurnedAmount;
+        actualSupply = actualSupply == 0 ? 1 : actualSupply;
         if (nativeYieldToken == WETH) {
             uint256 yieldAmount = IERC20Rebasing(nativeYieldToken).getClaimableAmount(address(this));
             if (yieldAmount > 0) {
                 uint256 syAmount = IStandardizedYield(SY_BETH).previewDeposit(nativeYieldToken, yieldAmount);
-                uint256 newIndex = syBETHYieldIndex + syAmount.divDown(totalSupply - proactivelyBurnedAmount);
+                uint256 newIndex = syBETHYieldIndex + syAmount.divDown(actualSupply);
                 MakerNativeYield storage lastYield = makerBETHNativeYields[msgSender];
                 accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf[msgSender]);
             }
@@ -116,7 +118,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
             uint256 yieldAmount = IERC20Rebasing(nativeYieldToken).getClaimableAmount(address(this));
             if (yieldAmount > 0) {
                 uint256 syAmount = IStandardizedYield(SY_USDB).previewDeposit(nativeYieldToken, yieldAmount);
-                uint256 newIndex = syUSDBYieldIndex + syAmount.divDown(totalSupply - proactivelyBurnedAmount);
+                uint256 newIndex = syUSDBYieldIndex + syAmount.divDown(actualSupply);
                 MakerNativeYield storage lastYield = makerUSDBNativeYields[msgSender];
                 accrued = lastYield.accrued + (newIndex - lastYield.index).mulDown(balanceOf[msgSender]);
             }
@@ -155,9 +157,12 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
      */
     function updateAndDistributeYields(address to) public {
         uint256 _totalSupply = totalSupply;
+        
         if (_totalSupply != 0) {
-            if (enableBETHNativeYield) _processBETHYield(to, _totalSupply - proactivelyBurnedAmount);
-            if (enableUSDBNativeYield) _processUSDBYield(to, _totalSupply - proactivelyBurnedAmount);
+            uint256 actualSupply = _totalSupply - proactivelyBurnedAmount;
+            actualSupply = actualSupply == 0 ? 1 : actualSupply;
+            if (enableBETHNativeYield) _processBETHYield(to, actualSupply);
+            if (enableUSDBNativeYield) _processUSDBYield(to, actualSupply);
         }
     }
 
@@ -288,7 +293,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         {
             uint256 k = uint256(reserve0) * uint256(reserve1);
             // The market-making revenue from LPs that are proactively burned will be distributed to others
-            feeGrowthX128 += (Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128 / (totalSupply - proactivelyBurnedAmount);
+            uint256 actualSupply = totalSupply - proactivelyBurnedAmount;
+            actualSupply = actualSupply == 0 ? 1 : actualSupply;
+            feeGrowthX128 += (Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128 / actualSupply;
             kLast = k;
         }
 
