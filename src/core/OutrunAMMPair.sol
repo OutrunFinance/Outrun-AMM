@@ -211,7 +211,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
         {
             uint256 k = uint256(reserve0) * uint256(reserve1);
             // The market-making revenue from LPs that are proactively burned will be distributed to others
-            feeGrowthX128 += (Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128 / (totalSupply - proactivelyBurnedAmount);
+            uint256 actualSupply = totalSupply - proactivelyBurnedAmount;
+            actualSupply = actualSupply == 0 ? 1 : actualSupply;
+            feeGrowthX128 += (Math.sqrt(k) - Math.sqrt(kLast)) * FixedPoint128.Q128 / actualSupply;
             kLast = k;
         }
 
