@@ -325,13 +325,13 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
             // swapFee * 25% as protocolFee
             rebateFee = 0;
             protocolFee = amountIn * swapFeeRate / (RATIO * 4);
-            balance -= protocolFee;
+            balanceAfter = balance - protocolFee;
             _safeTransfer(token, feeTo, protocolFee);
         } else {
             // swapFee * 25% * 20% as rebateFee, swapFee * 25% * 80% as protocolFee
             rebateFee = amountIn * swapFeeRate / (RATIO * 20);
             protocolFee = amountIn * swapFeeRate / (RATIO * 5);
-            balance -= rebateFee + protocolFee;
+            balanceAfter = balance - rebateFee - protocolFee;
             _safeTransfer(token, referrer, rebateFee);
             _safeTransfer(token, feeTo, protocolFee);
         }
