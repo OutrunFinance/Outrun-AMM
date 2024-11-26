@@ -192,9 +192,10 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
         uint256 rebateFee1;
         uint256 protocolFee0;
         uint256 protocolFee1;
+        uint256 _swapFeeRate = swapFeeRate;
         {
-            uint256 balance0Adjusted = balance0 * RATIO - amount0In * swapFeeRate;
-            uint256 balance1Adjusted = balance1 * RATIO - amount1In * swapFeeRate;
+            uint256 balance0Adjusted = balance0 * RATIO - amount0In * _swapFeeRate;
+            uint256 balance1Adjusted = balance1 * RATIO - amount1In * _swapFeeRate;
             
             require(
                 balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * uint256(_reserve1) * RATIO ** 2,
@@ -321,16 +322,17 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
             return (balance, 0, 0);
         }
 
+        uint256 _swapFeeRate = swapFeeRate;
         if (referrer == address(0)) {
             // swapFee * 25% as protocolFee
             rebateFee = 0;
-            protocolFee = amountIn * swapFeeRate / (RATIO * 4);
+            protocolFee = amountIn * _swapFeeRate / (RATIO * 4);
             balanceAfter = balance - protocolFee;
             _safeTransfer(token, feeTo, protocolFee);
         } else {
             // swapFee * 25% * 20% as rebateFee, swapFee * 25% * 80% as protocolFee
-            rebateFee = amountIn * swapFeeRate / (RATIO * 20);
-            protocolFee = amountIn * swapFeeRate / (RATIO * 5);
+            rebateFee = amountIn * _swapFeeRate / (RATIO * 20);
+            protocolFee = amountIn * _swapFeeRate / (RATIO * 5);
             balanceAfter = balance - rebateFee - protocolFee;
             _safeTransfer(token, referrer, rebateFee);
             _safeTransfer(token, feeTo, protocolFee);
