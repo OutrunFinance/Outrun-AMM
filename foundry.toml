@@ -10,7 +10,7 @@ extra_output = ["storageLayout"]
 gas_reports = ["*"]
 
 [rpc_endpoints]
-blast_sepolia = "${BLAST_TESTNET_RPC}"
+blast_sepolia = "${BLAST_SEPOLIA_RPC}"
 
 [etherscan]
 blast_sepolia = { key = "${BLASTSCAN_API_KEY}", chain = "168587773", url = "${BLAST_API_URL}" }
