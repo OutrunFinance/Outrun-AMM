@@ -40,20 +40,13 @@ contract OutrunAMMScript is BaseScript {
         address factory02Addr = address(factory02);
         console.log("1% fee OutrunAMMFactory deployed on %s", factory02Addr);
 
-        // 0.3% fee OutrunAMMRouter01
-        OutrunAMMRouter router01 = new OutrunAMMRouter(
+        // OutrunAMMRouter
+        OutrunAMMRouter router = new OutrunAMMRouter(
             factory01Addr, 
-            WETH
-        );
-        address router01Addr = address(router01);
-        console.log("0.3% fee OutrunAMMRouter deployed on %s", router01Addr);
-
-        // 1% fee OutrunAMMRouter02
-        OutrunAMMRouter router02 = new OutrunAMMRouter(
             factory02Addr, 
             WETH
         );
-        address router02Addr = address(router02);
-        console.log("1% fee OutrunAMMRouter deployed on %s", router02Addr);
+        address routerAddr = address(router);
+        console.log("OutrunAMMRouter deployed on %s", routerAddr);
     }
 }

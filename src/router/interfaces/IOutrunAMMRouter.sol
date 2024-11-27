@@ -2,8 +2,8 @@
 pragma solidity ^0.8.26;
 
 interface IOutrunAMMRouter {
-    function factory() external view returns (address);
-
+    function factories(uint256 feeRate) external view returns (address);
+    
     function WETH() external view returns (address);
 
     /**
@@ -12,6 +12,7 @@ interface IOutrunAMMRouter {
     function addLiquidity(
         address tokenA,
         address tokenB,
+        uint256 feeRate,
         uint256 amountADesired,
         uint256 amountBDesired,
         uint256 amountAMin,
@@ -22,6 +23,7 @@ interface IOutrunAMMRouter {
 
     function addLiquidityETH(
         address token,
+        uint256 feeRate,
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
         uint256 amountETHMin,
@@ -35,6 +37,7 @@ interface IOutrunAMMRouter {
     function removeLiquidity(
         address tokenA,
         address tokenB,
+        uint256 feeRate,
         uint256 liquidity,
         uint256 amountAMin,
         uint256 amountBMin,
@@ -44,6 +47,7 @@ interface IOutrunAMMRouter {
 
     function removeLiquidityETH(
         address token,
+        uint256 feeRate,
         uint256 liquidity,
         uint256 amountTokenMin,
         uint256 amountETHMin,
@@ -53,6 +57,7 @@ interface IOutrunAMMRouter {
 
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
+        uint256 feeRate,
         uint256 liquidity,
         uint256 amountTokenMin,
         uint256 amountETHMin,
@@ -67,6 +72,7 @@ interface IOutrunAMMRouter {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -76,14 +82,16 @@ interface IOutrunAMMRouter {
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
     function swapExactETHForTokens(
-        uint256 amountOutMin, 
-        address[] calldata path, 
+        uint256 amountOutMin,
+        address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -93,6 +101,7 @@ interface IOutrunAMMRouter {
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -102,6 +111,7 @@ interface IOutrunAMMRouter {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -110,6 +120,7 @@ interface IOutrunAMMRouter {
     function swapETHForExactTokens(
         uint256 amountOut,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -119,6 +130,7 @@ interface IOutrunAMMRouter {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -127,6 +139,7 @@ interface IOutrunAMMRouter {
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint256 amountOutMin,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -136,6 +149,7 @@ interface IOutrunAMMRouter {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
+        uint256[] calldata feeRates,
         address to,
         address referrer,
         uint256 deadline
@@ -147,26 +161,37 @@ interface IOutrunAMMRouter {
         uint256 reserveB
     ) external view returns (uint256 amountB);
 
+    function getReserves(
+        address factory, 
+        address tokenA, 
+        address tokenB,
+        uint256 feeRate
+    ) external view returns (uint256 reserveA, uint256 reserveB);
+
     function getAmountOut(
         uint256 amountIn, 
         uint256 reserveIn, 
-        uint256 reserveOut
+        uint256 reserveOut,
+        uint256 feeRate
     ) external view returns (uint256 amountOut);
 
     function getAmountIn(
         uint256 amountOut, 
         uint256 reserveIn, 
-        uint256 reserveOut
+        uint256 reserveOut,
+        uint256 feeRate
     ) external view returns (uint256 amountIn);
 
     function getAmountsOut(
         uint256 amountIn, 
-        address[] memory path
+        address[] memory path,
+        uint256[] memory feeRates
     ) external view returns (uint256[] memory amounts);
 
     function getAmountsIn(
         uint256 amountOut, 
-        address[] memory path
+        address[] memory path,
+        uint256[] memory feeRates
     ) external view returns (uint256[] memory amounts);
 
     error Expired();
@@ -175,11 +200,17 @@ interface IOutrunAMMRouter {
 
     error InvaildETHSender();
 
+    error InsufficientAmount();
+
     error InsufficientBAmount();
 
     error InsufficientAAmount();
 
     error ExcessiveInputAmount();
+    
+    error InsufficientLiquidity();
+
+    error InsufficientInputAmount();
 
     error InsufficientOutputAmount();
 }
