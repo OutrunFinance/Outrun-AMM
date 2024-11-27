@@ -20,7 +20,7 @@ contract OutrunAMMScript is BaseScript {
     address internal feeTo;
 
     function run() public broadcaster {
-        WETH = vm.envAddress("WETH");
+        WETH = vm.envAddress("BLAST_WETH");
         USDB = vm.envAddress("USDB");
         SY_BETH = vm.envAddress("SY_BETH");
         SY_USDB = vm.envAddress("SY_USDB");
@@ -56,22 +56,13 @@ contract OutrunAMMScript is BaseScript {
         console.log("1% fee OutrunAMMYieldVault deployed on %s", yieldVault02Addr);
         console.log("1% fee OutrunAMMFactory deployed on %s", factory02Addr);
 
-        // OutrunAMMRouter01
-        OutrunAMMRouter router01 = new OutrunAMMRouter(
+        // OutrunAMMRouter
+        OutrunAMMRouter router = new OutrunAMMRouter(
             factory01Addr, 
-            WETH, 
-            gasManager
-        );
-        address router01Addr = address(router01);
-        console.log("0.3% fee OutrunAMMRouter deployed on %s", router01Addr);
-
-        // OutrunAMMRouter02
-        OutrunAMMRouter router02 = new OutrunAMMRouter(
             factory02Addr, 
-            WETH, 
-            gasManager
+            WETH
         );
-        address router02Addr = address(router02);
-        console.log("1% fee OutrunAMMRouter deployed on %s", router02Addr);
+        address routerAddr = address(router);
+        console.log("OutrunAMMRouter deployed on %s", routerAddr);
     }
 }
