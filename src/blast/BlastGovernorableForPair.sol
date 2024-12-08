@@ -4,9 +4,7 @@ pragma solidity ^0.8.26;
 import { IBlast } from "./IBlast.sol";
 import { BlastModeEnum } from "./BlastModeEnum.sol";
 
-interface IBlastGovernorable is BlastModeEnum  {
-    function configure(YieldMode yieldMode, GasMode gasMode) external;
-
+interface IBlastGovernorableForPair is BlastModeEnum  {
     function readGasBalance() external view returns (uint256);
 
     function claimMaxGas(address recipient) external returns (uint256 gasAmount);
@@ -14,7 +12,7 @@ interface IBlastGovernorable is BlastModeEnum  {
     function transferGasManager(address newBlastGovernor) external;
 }
 
-abstract contract BlastGovernorable is IBlastGovernorable {
+abstract contract BlastGovernorableForPair is IBlastGovernorableForPair {
     IBlast public constant BLAST = IBlast(0x4300000000000000000000000000000000000002);  // TODO update mainnet
 
     address public blastGovernor;
@@ -29,17 +27,14 @@ abstract contract BlastGovernorable is IBlastGovernorable {
 
     constructor(address initialBlastGovernor) {
         require(initialBlastGovernor != address(0), BlastZeroAddress());
-        blastGovernor = initialBlastGovernor;
+        
+        _transferBlastGovernor(initialBlastGovernor);
     }
 
     modifier onlyBlastGovernor() {
         address msgSender = msg.sender;
         require(blastGovernor == msgSender, UnauthorizedAccount(msgSender));
         _;
-    }
-
-    function configure(YieldMode yieldMode, GasMode gasMode) external override onlyBlastGovernor {
-        BLAST.configure(yieldMode, gasMode, blastGovernor);
     }
 
     /**

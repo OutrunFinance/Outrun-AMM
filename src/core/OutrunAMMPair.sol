@@ -15,9 +15,9 @@ import {UQ112x112} from "../libraries/UQ112x112.sol";
 import {IBlastPoints} from "../blast/IBlastPoints.sol";
 import {IERC20Rebasing} from "../blast/IERC20Rebasing.sol";
 import {FixedPoint128} from "../libraries/FixedPoint128.sol";
-import {BlastGovernorable} from "../blast/BlastGovernorable.sol";
+import {BlastGovernorableForPair} from "../blast/BlastGovernorableForPair.sol";
 
-contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorable {
+contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorableForPair {
     using OMath for uint256;
     using UQ112x112 for uint224;
 
@@ -66,7 +66,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorable {
         unlocked = 1;
     }
 
-    constructor(address _blastGovernor, address _YIELD_VAULT) BlastGovernorable(_blastGovernor) {
+    constructor(address _blastGovernor, address _YIELD_VAULT) BlastGovernorableForPair(_blastGovernor) {
         factory = msg.sender;
         YIELD_VAULT = _YIELD_VAULT;
         IBlastPoints(BLAST_POINTS).configurePointsOperator(IOutrunAMMFactory(msg.sender).pointsOperator());
