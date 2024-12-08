@@ -15,27 +15,28 @@ contract OutrunAMMScript is BaseScript {
     address internal SY_USDB;
 
     address internal owner;
-    address internal gasManager;
+    address internal blastGovernor;
     address internal pointsOperator;
     address internal feeTo;
 
     function run() public broadcaster {
-        WETH = vm.envAddress("BLAST_WETH");
-        USDB = vm.envAddress("USDB");
         SY_BETH = vm.envAddress("SY_BETH");
         SY_USDB = vm.envAddress("SY_USDB");
         owner = vm.envAddress("OWNER");
-        gasManager = vm.envAddress("GAS_MANAGER");
-        pointsOperator = vm.envAddress("POINTS_OPERATOR");
         feeTo = vm.envAddress("FEE_TO");
+
+        blastGovernor = vm.envAddress("BLAST_GOVERNOR");
+        pointsOperator = vm.envAddress("POINTS_OPERATOR");
+        WETH = vm.envAddress("TESTNET_WETH");
+        USDB = vm.envAddress("TESTNET_USDB");
         
         console.log("Pair initcode:");
-        console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode, abi.encode(gasManager))));
+        console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode, abi.encode(blastGovernor))));
 
         // 0.3% fee
-        OutrunAMMYieldVault yieldVault01 = new OutrunAMMYieldVault(SY_BETH, SY_USDB, gasManager);
+        OutrunAMMYieldVault yieldVault01 = new OutrunAMMYieldVault(SY_BETH, SY_USDB, blastGovernor);
         address yieldVault01Addr = address(yieldVault01);
-        OutrunAMMFactory factory01 = new OutrunAMMFactory(owner, gasManager, WETH, USDB, yieldVault01Addr, pointsOperator, 30);
+        OutrunAMMFactory factory01 = new OutrunAMMFactory(owner, blastGovernor, WETH, USDB, yieldVault01Addr, pointsOperator, 30);
         factory01.setFeeTo(feeTo);
 
         address factory01Addr = address(factory01);
@@ -45,9 +46,9 @@ contract OutrunAMMScript is BaseScript {
         console.log("0.3% fee OutrunAMMFactory deployed on %s", factory01Addr);
 
         // 1% fee
-        OutrunAMMYieldVault yieldVault02 = new OutrunAMMYieldVault(SY_BETH, SY_USDB, gasManager);
+        OutrunAMMYieldVault yieldVault02 = new OutrunAMMYieldVault(SY_BETH, SY_USDB, blastGovernor);
         address yieldVault02Addr = address(yieldVault02);
-        OutrunAMMFactory factory02 = new OutrunAMMFactory(owner, gasManager, WETH, USDB, yieldVault02Addr, pointsOperator, 100);
+        OutrunAMMFactory factory02 = new OutrunAMMFactory(owner, blastGovernor, WETH, USDB, yieldVault02Addr, pointsOperator, 100);
         factory02.setFeeTo(feeTo);
 
         address factory02Addr = address(factory02);
@@ -60,7 +61,8 @@ contract OutrunAMMScript is BaseScript {
         OutrunAMMRouter router = new OutrunAMMRouter(
             factory01Addr, 
             factory02Addr, 
-            WETH
+            WETH,
+            blastGovernor
         );
         address routerAddr = address(router);
         console.log("OutrunAMMRouter deployed on %s", routerAddr);

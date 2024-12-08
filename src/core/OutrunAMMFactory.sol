@@ -5,9 +5,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {OutrunAMMPair, IOutrunAMMPair} from "./OutrunAMMPair.sol";
 import {IOutrunAMMFactory} from "./interfaces/IOutrunAMMFactory.sol";
-import {GasManagerable} from "../blast/GasManagerable.sol";
+import {BlastGovernorable} from "../blast/BlastGovernorable.sol";
 
-contract OutrunAMMFactory is IOutrunAMMFactory, Ownable, GasManagerable {
+contract OutrunAMMFactory is IOutrunAMMFactory, Ownable, BlastGovernorable {
     address public immutable WETH;
     address public immutable USDB;
     address public immutable YIELD_VAULT;
@@ -21,13 +21,13 @@ contract OutrunAMMFactory is IOutrunAMMFactory, Ownable, GasManagerable {
 
     constructor(
         address owner_, 
-        address gasManager_,
+        address blastGovernor_,
         address WETH_,
         address USDB_,
         address YIELD_VAULT_,
         address pointsOperator_,
         uint256 swapFeeRate_
-    ) Ownable(owner_) GasManagerable(gasManager_) {
+    ) Ownable(owner_) BlastGovernorable(blastGovernor_) {
         WETH = WETH_;
         USDB = USDB_;
         YIELD_VAULT = YIELD_VAULT_;
@@ -47,7 +47,7 @@ contract OutrunAMMFactory is IOutrunAMMFactory, Ownable, GasManagerable {
         require(getPair[token0][token1] == address(0), PairExists()); // single check is sufficient
 
         bytes32 _salt = keccak256(abi.encodePacked(token0, token1, swapFeeRate));
-        pair = address(new OutrunAMMPair{salt: _salt}(gasManager, YIELD_VAULT));
+        pair = address(new OutrunAMMPair{salt: _salt}(blastGovernor, YIELD_VAULT));
         IOutrunAMMPair(pair).initialize(
             token0, 
             token1, 

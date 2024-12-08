@@ -4,14 +4,14 @@ pragma solidity ^0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IWETH} from "../libraries/IWETH.sol";
-import {GasManagerable} from "../blast/GasManagerable.sol";
+import {BlastGovernorable} from "../blast/BlastGovernorable.sol";
 import {TransferHelper} from "../libraries/TransferHelper.sol";
 import {IOutrunAMMRouter} from "./interfaces/IOutrunAMMRouter.sol";
 import {IOutrunAMMERC20} from "../core/interfaces/IOutrunAMMERC20.sol";
 import {IOutrunAMMFactory} from "../core/interfaces/IOutrunAMMFactory.sol";
 import {OutrunAMMLibrary, IOutrunAMMPair} from "../libraries/OutrunAMMLibrary.sol";
 
-contract OutrunAMMRouter is IOutrunAMMRouter, GasManagerable {
+contract OutrunAMMRouter is IOutrunAMMRouter, BlastGovernorable {
     uint256 public constant RATIO = 10000;
     address public immutable WETH;
 
@@ -26,8 +26,8 @@ contract OutrunAMMRouter is IOutrunAMMRouter, GasManagerable {
         address _factory0, 
         address _factory1, 
         address _WETH, 
-        address _gasManager
-    ) GasManagerable(_gasManager) {
+        address _blastGovernor
+    ) BlastGovernorable(_blastGovernor) {
         factories[30] = _factory0;      // 0.3%
         factories[100] = _factory1;     // 1%
         WETH = _WETH;

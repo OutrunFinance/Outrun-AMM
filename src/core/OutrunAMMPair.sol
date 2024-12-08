@@ -12,12 +12,12 @@ import {IStandardizedYield} from "./interfaces/IStandardizedYield.sol";
 import {IOutrunAMMYieldVault} from "./interfaces/IOutrunAMMYieldVault.sol";
 import {OMath} from "../libraries/OMath.sol";
 import {UQ112x112} from "../libraries/UQ112x112.sol";
-import {FixedPoint128} from "../libraries/FixedPoint128.sol";
 import {IBlastPoints} from "../blast/IBlastPoints.sol";
-import {GasManagerable} from "../blast/GasManagerable.sol";
-import {IERC20Rebasing, BlastModeEnum} from "../blast/IERC20Rebasing.sol";
+import {IERC20Rebasing} from "../blast/IERC20Rebasing.sol";
+import {FixedPoint128} from "../libraries/FixedPoint128.sol";
+import {BlastGovernorable} from "../blast/BlastGovernorable.sol";
 
-contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastModeEnum {
+contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorable {
     using OMath for uint256;
     using UQ112x112 for uint224;
 
@@ -66,7 +66,7 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, GasManagerable, BlastM
         unlocked = 1;
     }
 
-    constructor(address _gasManager, address _YIELD_VAULT) GasManagerable(_gasManager) {
+    constructor(address _blastGovernor, address _YIELD_VAULT) BlastGovernorable(_blastGovernor) {
         factory = msg.sender;
         YIELD_VAULT = _YIELD_VAULT;
         IBlastPoints(BLAST_POINTS).configurePointsOperator(IOutrunAMMFactory(msg.sender).pointsOperator());

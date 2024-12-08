@@ -1,14 +1,14 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import {GasManagerable} from "../blast/GasManagerable.sol";
+import {BlastGovernorable} from "../blast/BlastGovernorable.sol";
 import {Initializable} from "../libraries/Initializable.sol";
 import {TransferHelper} from "../libraries/TransferHelper.sol";
 import {IOutrunAMMPair} from "./interfaces/IOutrunAMMPair.sol";
 import {IOutrunAMMFactory} from "./interfaces/IOutrunAMMFactory.sol";
 import {IOutrunAMMYieldVault} from "./interfaces/IOutrunAMMYieldVault.sol";
 
-contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, GasManagerable {
+contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, BlastGovernorable {
     address public immutable SY_BETH;
     address public immutable SY_USDB;
 
@@ -17,8 +17,8 @@ contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, GasManagera
     constructor(
         address _SY_BETH, 
         address _SY_USDB,  
-        address _gasManager
-    ) GasManagerable(_gasManager) {
+        address _blastGovernor
+    ) BlastGovernorable(_blastGovernor) {
         SY_BETH = _SY_BETH;
         SY_USDB = _SY_USDB;
     }
