@@ -30,28 +30,28 @@ contract OutrunAMMScript is BaseScript {
         
         blastGovernor = vm.envAddress("BLAST_GOVERNOR");
         pointsOperator = vm.envAddress("POINTS_OPERATOR");
-        WETH = vm.envAddress("TESTNET_WETH");
-        USDB = vm.envAddress("TESTNET_USDB");
+        WETH = vm.envAddress("BLAST_TESTNET_WETH");
+        USDB = vm.envAddress("BLAST_TESTNET_USDB");
         
         console.log("Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode, abi.encode(blastGovernor))));
 
         // 0.3% fee
-        address factory01 = deployVaultAndFactory(30, 1);
+        address factory0 = deployVaultAndFactory(30, 2);
 
         // 1% fee
-        address factory02 = deployVaultAndFactory(100, 1);
+        address factory1 = deployVaultAndFactory(100, 2);
 
         // OutrunAMMRouter
-        deployOutrunAMMRouter(factory01, factory02, 1);
+        deployOutrunAMMRouter(factory0, factory1, 2);
     }
 
-    function deployVaultAndFactory(uint256 swapFeeRate, uint256 version) internal returns (address factoryAddr) {
+    function deployVaultAndFactory(uint256 swapFeeRate, uint256 nonce) internal returns (address factoryAddr) {
         OutrunAMMYieldVault yieldVault = new OutrunAMMYieldVault(SY_BETH, SY_USDB, blastGovernor);
         address yieldVaultAddr = address(yieldVault);
 
         // Deploy OutrunAMMFactory By OutrunDeployer
-        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMFactory", swapFeeRate, version));
+        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMFactory", swapFeeRate, nonce));
         bytes memory creationCode = abi.encodePacked(
             type(OutrunAMMFactory).creationCode,
             abi.encode(owner, blastGovernor, WETH, USDB, yieldVaultAddr, pointsOperator, swapFeeRate)
@@ -65,12 +65,12 @@ contract OutrunAMMScript is BaseScript {
         console.log("%d fee OutrunAMMFactory deployed on %s", swapFeeRate, factoryAddr);
     }
 
-    function deployOutrunAMMRouter(address factory01, address factory02, uint256 version) internal {
+    function deployOutrunAMMRouter(address factory0, address factory1, uint256 nonce) internal {
         // Deploy OutrunAMMFactory By OutrunDeployer
-        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMRouter", version));
+        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMRouter", nonce));
         bytes memory creationCode = abi.encodePacked(
             type(OutrunAMMRouter).creationCode,
-            abi.encode(factory01, factory02, factory02, blastGovernor)
+            abi.encode(factory0, factory1, WETH, blastGovernor)
         );
         address routerAddr = IOutrunDeployer(OUTRUN_DEPLOYER).deploy(salt, creationCode);
 
