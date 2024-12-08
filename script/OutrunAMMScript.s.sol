@@ -2,17 +2,19 @@
 pragma solidity ^0.8.26;
 
 import "./BaseScript.s.sol";
-import {OutrunAMMERC20} from "../src/core/OutrunAMMERC20.sol";
+import {IOutrunDeployer} from "./IOutrunDeployer.sol";
 import {OutrunAMMPair} from "../src/core/OutrunAMMPair.sol";
-import {OutrunAMMFactory} from "../src/core/OutrunAMMFactory.sol";
-import {OutrunAMMYieldVault} from "../src/core/OutrunAMMYieldVault.sol";
+import {OutrunAMMERC20} from "../src/core/OutrunAMMERC20.sol";
 import {OutrunAMMRouter} from "../src/router/OutrunAMMRouter.sol";
+import {OutrunAMMYieldVault} from "../src/core/OutrunAMMYieldVault.sol";
+import {OutrunAMMFactory, IOutrunAMMFactory} from "../src/core/OutrunAMMFactory.sol";
 
 contract OutrunAMMScript is BaseScript {
     address internal WETH;
     address internal USDB;
     address internal SY_BETH;
     address internal SY_USDB;
+    address internal OUTRUN_DEPLOYER;
 
     address internal owner;
     address internal blastGovernor;
@@ -20,11 +22,12 @@ contract OutrunAMMScript is BaseScript {
     address internal feeTo;
 
     function run() public broadcaster {
-        SY_BETH = vm.envAddress("SY_BETH");
-        SY_USDB = vm.envAddress("SY_USDB");
         owner = vm.envAddress("OWNER");
         feeTo = vm.envAddress("FEE_TO");
-
+        SY_BETH = vm.envAddress("SY_BETH");
+        SY_USDB = vm.envAddress("SY_USDB");
+        OUTRUN_DEPLOYER = vm.envAddress("OUTRUN_DEPLOYER");
+        
         blastGovernor = vm.envAddress("BLAST_GOVERNOR");
         pointsOperator = vm.envAddress("POINTS_OPERATOR");
         WETH = vm.envAddress("TESTNET_WETH");
@@ -34,36 +37,43 @@ contract OutrunAMMScript is BaseScript {
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode, abi.encode(blastGovernor))));
 
         // 0.3% fee
-        address factory01 = deployVaultAndFactory(30);
+        address factory01 = deployVaultAndFactory(30, 1);
 
         // 1% fee
-        address factory02 = deployVaultAndFactory(100);
+        address factory02 = deployVaultAndFactory(100, 1);
 
         // OutrunAMMRouter
-        deployOutrunAMMRouter(factory01, factory02);
+        deployOutrunAMMRouter(factory01, factory02, 1);
     }
 
-    function deployVaultAndFactory(uint256 swapFeeRate) internal returns (address factoryAddr) {
+    function deployVaultAndFactory(uint256 swapFeeRate, uint256 version) internal returns (address factoryAddr) {
         OutrunAMMYieldVault yieldVault = new OutrunAMMYieldVault(SY_BETH, SY_USDB, blastGovernor);
         address yieldVaultAddr = address(yieldVault);
-        OutrunAMMFactory factory = new OutrunAMMFactory(owner, blastGovernor, WETH, USDB, yieldVaultAddr, pointsOperator, swapFeeRate);
-        factory.setFeeTo(feeTo);
 
-        factoryAddr = address(factory);
+        // Deploy OutrunAMMFactory By OutrunDeployer
+        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMFactory", swapFeeRate, version));
+        bytes memory creationCode = abi.encodePacked(
+            type(OutrunAMMFactory).creationCode,
+            abi.encode(owner, blastGovernor, WETH, USDB, yieldVaultAddr, pointsOperator, swapFeeRate)
+        );
+        factoryAddr = IOutrunDeployer(OUTRUN_DEPLOYER).deploy(salt, creationCode);
+        IOutrunAMMFactory(factoryAddr).setFeeTo(feeTo);
+
         yieldVault.initialize(factoryAddr);
 
         console.log("%d fee OutrunAMMYieldVault deployed on %s", swapFeeRate, yieldVaultAddr);
         console.log("%d fee OutrunAMMFactory deployed on %s", swapFeeRate, factoryAddr);
     }
 
-    function deployOutrunAMMRouter(address factory01, address factory02) internal {
-        OutrunAMMRouter router = new OutrunAMMRouter(
-            factory01, 
-            factory02, 
-            WETH,
-            blastGovernor
+    function deployOutrunAMMRouter(address factory01, address factory02, uint256 version) internal {
+        // Deploy OutrunAMMFactory By OutrunDeployer
+        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMRouter", version));
+        bytes memory creationCode = abi.encodePacked(
+            type(OutrunAMMRouter).creationCode,
+            abi.encode(factory01, factory02, factory02, blastGovernor)
         );
-        address routerAddr = address(router);
+        address routerAddr = IOutrunDeployer(OUTRUN_DEPLOYER).deploy(salt, creationCode);
+
         console.log("OutrunAMMRouter deployed on %s", routerAddr);
     }
 }
