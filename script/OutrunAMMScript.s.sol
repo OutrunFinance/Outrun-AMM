@@ -25,7 +25,8 @@ contract OutrunAMMScript is BaseScript {
         console.log("Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode)));
 
-        _deployOnBNBChain();
+        // _deployOnBNBChain();
+        _deployOnBaseChain();
         
         // ReferralManager
         // referralManager = address(new ReferralManager(owner));
@@ -34,6 +35,11 @@ contract OutrunAMMScript is BaseScript {
 
     function _deployOnBNBChain() internal {
         WETH = vm.envAddress("BSC_TESTNET_WBNB");
+        _deploy();
+    }
+
+    function _deployOnBaseChain() internal {
+        WETH = vm.envAddress("BASE_SEPOLIA_WETH");
         _deploy();
     }
 
@@ -48,9 +54,9 @@ contract OutrunAMMScript is BaseScript {
         _deployOutrunAMMRouter(factory0, factory1, 2);
     }
 
-    function _deployFactory(uint256 swapFeeRate, uint256 version) internal returns (address factoryAddr) {
+    function _deployFactory(uint256 swapFeeRate, uint256 nonce) internal returns (address factoryAddr) {
         // Deploy OutrunAMMFactory By OutrunDeployer
-        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMFactory", swapFeeRate, version));
+        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMFactory", swapFeeRate, nonce));
         bytes memory creationCode = abi.encodePacked(
             type(OutrunAMMFactory).creationCode,
             abi.encode(owner, swapFeeRate)
@@ -61,9 +67,9 @@ contract OutrunAMMScript is BaseScript {
         console.log("%d fee OutrunAMMFactory deployed on %s", swapFeeRate, factoryAddr);
     }
 
-    function _deployOutrunAMMRouter(address factory0, address factory01, uint256 version) internal {
+    function _deployOutrunAMMRouter(address factory0, address factory01, uint256 nonce) internal {
         // Deploy OutrunAMMFactory By OutrunDeployer
-        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMRouter", version));
+        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMRouter", nonce));
         bytes memory creationCode = abi.encodePacked(
             type(OutrunAMMRouter).creationCode,
             abi.encode(factory0, factory01, WETH)
