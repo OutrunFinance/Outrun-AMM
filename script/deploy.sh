@@ -14,5 +14,4 @@ forge script OutrunAMMScript.s.sol:OutrunAMMScript --rpc-url base_sepolia \
     --optimize --optimizer-runs 100000 \
     --via-ir \
     --broadcast --ffi -vvvv \
-    --resume \
     --verify 
