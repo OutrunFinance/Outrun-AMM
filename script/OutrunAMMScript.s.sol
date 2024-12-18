@@ -30,8 +30,8 @@ contract OutrunAMMScript is BaseScript {
         
         blastGovernor = vm.envAddress("BLAST_GOVERNOR");
         pointsOperator = vm.envAddress("POINTS_OPERATOR");
-        WETH = vm.envAddress("BLAST_TESTNET_WETH");
-        USDB = vm.envAddress("BLAST_TESTNET_USDB");
+        WETH = vm.envAddress("BLAST_SEPOLIA_WETH");
+        USDB = vm.envAddress("BLAST_SEPOLIA_USDB");
         
         console.log("Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode, abi.encode(blastGovernor))));
