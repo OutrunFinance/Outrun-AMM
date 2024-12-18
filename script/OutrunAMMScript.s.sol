@@ -25,33 +25,30 @@ contract OutrunAMMScript is BaseScript {
         console.log("Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode)));
 
-        // _deployOnBNBChain();
-        _deployOnBaseChain();
+        _deploy(2);
         
         // ReferralManager
         // referralManager = address(new ReferralManager(owner));
         // console.log("ReferralManager deployed on %s", referralManager);
     }
 
-    function _deployOnBNBChain() internal {
-        WETH = vm.envAddress("BSC_TESTNET_WBNB");
-        _deploy();
-    }
+    function _deploy(uint256 nonce) internal {
+        if (block.chainid == vm.envUint("BASE_SEPOLIA_CHAINID")) {
+            WETH = vm.envAddress("BASE_SEPOLIA_WETH");
+        } else if (block.chainid == vm.envUint("MANTLE_SEPOLIA_CHAINID")) {
+            WETH = vm.envAddress("MANTLE_SEPOLIA_WMNT");
+        } else if (block.chainid == vm.envUint("BSC_TESTNET_CHAINID")) {
+            WETH = vm.envAddress("BSC_TESTNET_WBNB");
+        }
 
-    function _deployOnBaseChain() internal {
-        WETH = vm.envAddress("BASE_SEPOLIA_WETH");
-        _deploy();
-    }
-
-    function _deploy() internal {
         // 0.3% fee
-        address factory0 = _deployFactory(30, 2);
+        address factory0 = _deployFactory(30, nonce);
 
         // 1% fee
-        address factory1 = _deployFactory(100, 2);
+        address factory1 = _deployFactory(100, nonce);
 
         // OutrunAMMRouter
-        _deployOutrunAMMRouter(factory0, factory1, 2);
+        _deployOutrunAMMRouter(factory0, factory1, nonce);
     }
 
     function _deployFactory(uint256 swapFeeRate, uint256 nonce) internal returns (address factoryAddr) {
