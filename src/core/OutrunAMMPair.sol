@@ -94,9 +94,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorableForPa
             unClaimedFeeX128 += unClaimedFeeX128 + feeAppendX128;
         }
 
-        uint256 _totalSupply = totalSupply;
-        amount0 = (unClaimedFeeX128 * reserve0 / _totalSupply) / FixedPoint128.Q128;
-        amount1 = (unClaimedFeeX128 * reserve1 / _totalSupply) / FixedPoint128.Q128;
+        uint256 rootKLast = Math.sqrt(kLast);
+        amount0 = (unClaimedFeeX128 * reserve0 / rootKLast) / FixedPoint128.Q128;
+        amount1 = (unClaimedFeeX128 * reserve1 / rootKLast) / FixedPoint128.Q128;
     }
 
     /**
@@ -183,12 +183,12 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorableForPa
             _calcFeeX128(to);
         }
 
-        uint256 _totalSupply = totalSupply;
-        if (_totalSupply == 0) {
+        if (totalSupply == 0) {
             liquidity = Math.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
             _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
-            liquidity = Math.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
+            uint256 rootKLast = Math.sqrt(kLast);
+            liquidity = Math.min(amount0 * rootKLast / _reserve0, amount1 * rootKLast / _reserve1);
         }
 
         require(liquidity > 0, InsufficientLiquidityMinted());
@@ -216,9 +216,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorableForPa
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
         uint256 liquidity = balanceOf[address(this)];
 
-        uint256 _kLast = kLast;
-        amount0 = liquidity * balance0 / _kLast; // using balances ensures pro-rata distribution
-        amount1 = liquidity * balance1 / _kLast; // using balances ensures pro-rata distribution
+        uint256 rootKLast = Math.sqrt(kLast);
+        amount0 = liquidity * balance0 / rootKLast; // using balances ensures pro-rata distribution
+        amount1 = liquidity * balance1 / rootKLast; // using balances ensures pro-rata distribution
 
         require(amount0 > 0 && amount1 > 0, InsufficientLiquidityBurned());
 
@@ -323,11 +323,11 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20, BlastGovernorableForPa
 
         address _token0 = token0;
         address _token1 = token1;
-        uint256 _kLast = kLast;
         uint256 balance0 = IERC20(_token0).balanceOf(address(this));
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
-        amount0 = unClaimedFee * balance0 / _kLast;
-        amount1 = unClaimedFee * balance1 / _kLast;           
+        uint256 rootKLast = Math.sqrt(kLast);
+        amount0 = unClaimedFee * balance0 / rootKLast;
+        amount1 = unClaimedFee * balance1 / rootKLast;           
         require(amount0 > 0 && amount1 > 0, InsufficientMakerFeeClaimed());
 
         _safeTransfer(_token0, msgSender, amount0);
