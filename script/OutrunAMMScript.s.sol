@@ -25,7 +25,7 @@ contract OutrunAMMScript is BaseScript {
         console.log("Pair initcode:");
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode)));
 
-        _deploy(3);
+        _deploy(4);
         
         // ReferralManager
         // referralManager = address(new ReferralManager(owner));
@@ -44,13 +44,13 @@ contract OutrunAMMScript is BaseScript {
         // // 0.3% fee
         // address factory0 = _deployFactory(30, nonce);
 
-        IOutrunAMMFactory(0x60c66aba647aB4115ccCffFa600e5c8b66AC41e0).setFeeTo(feeTo);
+        address factory0 = _deployFactory(30, nonce);
 
         // 1% fee
         address factory1 = _deployFactory(100, nonce);
 
         // OutrunAMMRouter
-        _deployOutrunAMMRouter(0x60c66aba647aB4115ccCffFa600e5c8b66AC41e0, factory1, nonce);
+        _deployOutrunAMMRouter(factory0, factory1, nonce);
     }
 
     function _deployFactory(uint256 swapFeeRate, uint256 nonce) internal returns (address factoryAddr) {
