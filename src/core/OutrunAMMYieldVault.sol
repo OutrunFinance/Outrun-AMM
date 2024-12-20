@@ -2,35 +2,31 @@
 pragma solidity ^0.8.26;
 
 import {BlastGovernorable} from "../blast/BlastGovernorable.sol";
-import {Initializable} from "../libraries/Initializable.sol";
 import {TransferHelper} from "../libraries/TransferHelper.sol";
 import {IOutrunAMMPair} from "./interfaces/IOutrunAMMPair.sol";
 import {IOutrunAMMFactory} from "./interfaces/IOutrunAMMFactory.sol";
 import {IOutrunAMMYieldVault} from "./interfaces/IOutrunAMMYieldVault.sol";
 
-contract OutrunAMMYieldVault is IOutrunAMMYieldVault, Initializable, BlastGovernorable {
+contract OutrunAMMYieldVault is IOutrunAMMYieldVault, BlastGovernorable {
     address public immutable SY_BETH;
     address public immutable SY_USDB;
-
-    address public facotry;
+    address public immutable FACTORY;
 
     constructor(
         address _SY_BETH, 
-        address _SY_USDB,  
+        address _SY_USDB, 
+        address _FACTORY, 
         address _blastGovernor
     ) BlastGovernorable(_blastGovernor) {
         SY_BETH = _SY_BETH;
         SY_USDB = _SY_USDB;
+        FACTORY = _FACTORY;
     }
 
     function isValidPair(address pair) public view override returns (bool) {
         (address token0, address token1) = IOutrunAMMPair(pair).getPairTokens();
         (address tokenA, address tokenB) = token0 < token1 ? (token0, token1) : (token1, token0);
-        return IOutrunAMMFactory(facotry).getPair(tokenA, tokenB) == pair;
-    }
-
-    function initialize(address _facotry) external override initializer {
-        facotry = _facotry;
+        return IOutrunAMMFactory(FACTORY).getPair(tokenA, tokenB) == pair;
     }
 
     function claimBETHNativeYield(address pair, address maker) external override {

@@ -4,8 +4,6 @@ pragma solidity ^0.8.26;
 interface IOutrunAMMYieldVault {
     function isValidPair(address pair) external view returns (bool);
 
-    function initialize(address _facotry) external;
-
     function claimBETHNativeYield(address pair, address maker) external;
 
     function claimUSDBNativeYield(address pair, address maker) external;
