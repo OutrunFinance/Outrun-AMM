@@ -71,9 +71,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
             unClaimedFeeX128 += unClaimedFeeX128 + feeAppendX128;
         }
 
-        uint256 _totalSupply = totalSupply;
-        amount0 = (unClaimedFeeX128 * reserve0 / _totalSupply) / FixedPoint128.Q128;
-        amount1 = (unClaimedFeeX128 * reserve1 / _totalSupply) / FixedPoint128.Q128;
+        uint256 rootKLast = Math.sqrt(kLast);
+        amount0 = (unClaimedFeeX128 * reserve0 / rootKLast) / FixedPoint128.Q128;
+        amount1 = (unClaimedFeeX128 * reserve1 / rootKLast) / FixedPoint128.Q128;
     }
 
     // called once by the factory at time of deployment
@@ -103,12 +103,12 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
         uint256 amount1 = balance1 - _reserve1;
 
         if (to != address(0)) _calcFeeX128(to);
-        uint256 _totalSupply = totalSupply; // must be defined here since totalSupply can update in _calcFeeX128
-        if (_totalSupply == 0) {
+        if (totalSupply == 0) {
             liquidity = Math.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
             _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
-            liquidity = Math.min(amount0 * _totalSupply / _reserve0, amount1 * _totalSupply / _reserve1);
+            uint256 rootKLast = Math.sqrt(kLast);
+            liquidity = Math.min(amount0 * rootKLast / _reserve0, amount1 * rootKLast / _reserve1);
         }
 
         require(liquidity > 0, InsufficientLiquidityMinted());
