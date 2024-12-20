@@ -37,28 +37,28 @@ contract OutrunAMMScript is BaseScript {
         console.logBytes32(keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode, abi.encode(blastGovernor))));
 
         // 0.3% fee
-        (, address factory0) = _deployVaultAndFactory(30, 2);
+        (, address factory0) = _deployVaultAndFactory(30, 4);
 
         // 1% fee
-        (, address factory1) = _deployVaultAndFactory(100, 2);
+        (, address factory1) = _deployVaultAndFactory(100, 4);
 
         // OutrunAMMRouter
-        _deployOutrunAMMRouter(factory0, factory1, 2);
+        _deployOutrunAMMRouter(factory0, factory1, 4);
 
-        _getDeployedFactory(30, 2);
-        _getDeployedFactory(100, 2);
+        // _getDeployedFactory(30, 4);
+        // _getDeployedFactory(100, 4);
     }
 
     function _getDeployedFactory(uint256 swapFeeRate, uint256 nonce) internal view returns (address deployed) {
-        bytes32 salt = keccak256(abi.encodePacked("MemeverseLauncher", swapFeeRate, nonce));
+        bytes32 salt = keccak256(abi.encodePacked("OutrunAMMFactory", swapFeeRate, nonce));
         deployed = IOutrunDeployer(OUTRUN_DEPLOYER).getDeployed(owner, salt);
 
         console.log("%d fee OutrunAMMFactory deployed on %s", swapFeeRate, deployed);
     }
 
     function _deployVaultAndFactory(uint256 swapFeeRate, uint256 nonce) internal returns (address yieldVaultAddr, address factoryAddr) {
-        address factory = swapFeeRate == 30 ? vm.envAddress("30_OUTRUN_AMM_FACTORY") 
-            : swapFeeRate == 100 ? vm.envAddress("100_OUTRUN_AMM_FACTORY") : address(0);
+        address factory = swapFeeRate == 30 ? vm.envAddress("OUTRUN_AMM_FACTORY_30") 
+            : swapFeeRate == 100 ? vm.envAddress("OUTRUN_AMM_FACTORY_100") : address(0);
         OutrunAMMYieldVault yieldVault = new OutrunAMMYieldVault(SY_BETH, SY_USDB, factory, blastGovernor);
         yieldVaultAddr = address(yieldVault);
 

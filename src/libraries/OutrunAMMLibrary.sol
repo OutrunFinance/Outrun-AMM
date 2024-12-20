@@ -27,7 +27,7 @@ library OutrunAMMLibrary {
                             factory,
                             keccak256(abi.encodePacked(token0, token1, swapFeeRate)),
                             /* bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(OutrunAMMPair).creationCode)); */
-                            hex"f7f33d6acd5c1d3af8ab2dedec5e80a7055cda24aa84c5e002681309abac62e3" // init code hash
+                            hex"e9e165f9c155648cc1c3d05d9833ed36bc097def8fe540c3bb1bdb7eefb23fae" // init code hash
                         )
                     )
                 )
