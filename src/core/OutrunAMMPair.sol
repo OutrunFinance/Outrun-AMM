@@ -241,9 +241,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
 
         address _token0 = token0;
         address _token1 = token1;
-        uint256 rootKLast = Math.sqrt(kLast);
         uint256 balance0 = IERC20(_token0).balanceOf(address(this));
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
+        uint256 rootKLast = Math.sqrt(kLast);
         amount0 = unClaimedFee * balance0 / rootKLast;
         amount1 = unClaimedFee * balance1 / rootKLast;           
         require(amount0 > 0 && amount1 > 0, InsufficientMakerFeeClaimed());
