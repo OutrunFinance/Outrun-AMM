@@ -134,9 +134,9 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
         uint256 liquidity = balanceOf[address(this)];
 
-        uint256 _kLast = kLast;
-        amount0 = liquidity * balance0 / _kLast; // using balances ensures pro-rata distribution
-        amount1 = liquidity * balance1 / _kLast; // using balances ensures pro-rata distribution
+        uint256 rootKLast = Math.sqrt(kLast);
+        amount0 = liquidity * balance0 / rootKLast; // using balances ensures pro-rata distribution
+        amount1 = liquidity * balance1 / rootKLast; // using balances ensures pro-rata distribution
 
         require(amount0 > 0 && amount1 > 0, InsufficientLiquidityBurned());
 
@@ -241,11 +241,11 @@ contract OutrunAMMPair is IOutrunAMMPair, OutrunAMMERC20 {
 
         address _token0 = token0;
         address _token1 = token1;
-        uint256 _kLast = kLast;
+        uint256 rootKLast = Math.sqrt(kLast);
         uint256 balance0 = IERC20(_token0).balanceOf(address(this));
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
-        amount0 = unClaimedFee * balance0 / _kLast;
-        amount1 = unClaimedFee * balance1 / _kLast;           
+        amount0 = unClaimedFee * balance0 / rootKLast;
+        amount1 = unClaimedFee * balance1 / rootKLast;           
         require(amount0 > 0 && amount1 > 0, InsufficientMakerFeeClaimed());
 
         _safeTransfer(_token0, msgSender, amount0);
