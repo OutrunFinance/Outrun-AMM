@@ -49,7 +49,7 @@ contract OutrunAMMScript is BaseScript {
         _getDeployedFactory(100, 2);
     }
 
-    function _getDeployedFactory(uint256 swapFeeRate, uint256 nonce) internal returns (address deployed) {
+    function _getDeployedFactory(uint256 swapFeeRate, uint256 nonce) internal view returns (address deployed) {
         bytes32 salt = keccak256(abi.encodePacked("MemeverseLauncher", swapFeeRate, nonce));
         address deployed = IOutrunDeployer(OUTRUN_DEPLOYER).getDeployed(owner, salt);
 
